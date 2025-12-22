@@ -287,3 +287,92 @@ function selectBackground(filename) {
     document.getElementById('bg-selector').value = filename;
     showToast('Background changed!', 'success');
 }
+
+// 11. Keyboard Shortcuts
+document.addEventListener('keydown', function(event) {
+    // Don't trigger shortcuts when typing in input fields
+    if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.tagName === 'SELECT') {
+        return;
+    }
+    
+    const key = event.key.toLowerCase();
+    
+    switch(key) {
+        case ' ':
+            event.preventDefault();
+            toggleTimer();
+            break;
+        case 'r':
+            event.preventDefault();
+            resetTimer();
+            break;
+        case '1':
+            event.preventDefault();
+            setMode('pomodoro');
+            showToast('Pomodoro mode', 'info');
+            break;
+        case '2':
+            event.preventDefault();
+            setMode('short');
+            showToast('Short break mode', 'info');
+            break;
+        case '3':
+            event.preventDefault();
+            setMode('long');
+            showToast('Long break mode', 'info');
+            break;
+        case 'm':
+            event.preventDefault();
+            toggleMusic();
+            break;
+        case 's':
+            event.preventDefault();
+            toggleSettings();
+            break;
+        case 'escape':
+            event.preventDefault();
+            // Close settings if open
+            const settingsModal = document.getElementById('settings-modal');
+            if (!settingsModal.classList.contains('hidden')) {
+                toggleSettings();
+            }
+            // Close music player if open
+            const musicPlayer = document.getElementById('music-player');
+            if (!musicPlayer.classList.contains('hidden')) {
+                toggleMusic();
+            }
+            break;
+    }
+});
+
+// Reset Timer Function
+function resetTimer() {
+    clearInterval(timerInterval);
+    isRunning = false;
+    document.getElementById('start-btn').innerText = 'START';
+    
+    // Reset to current mode's time
+    if (currentMode === 'pomodoro') timeLeft = 25 * 60;
+    if (currentMode === 'short') timeLeft = 5 * 60;
+    if (currentMode === 'long') timeLeft = 15 * 60;
+    
+    updateDisplay();
+    stopAlarm();
+    toggleCamera(false);
+    showToast('Timer reset', 'info');
+}
+
+// 12. Toggle Keyboard Shortcuts Guide
+function toggleShortcutsGuide() {
+    const guide = document.getElementById('shortcuts-guide');
+    const arrow = document.getElementById('shortcuts-arrow');
+    
+    guide.classList.toggle('hidden');
+    
+    // Rotate arrow icon
+    if (guide.classList.contains('hidden')) {
+        arrow.innerText = 'expand_more';
+    } else {
+        arrow.innerText = 'expand_less';
+    }
+}
