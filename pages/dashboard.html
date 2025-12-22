@@ -75,7 +75,8 @@
 
     <div id="settings-modal" class="hidden absolute inset-0 bg-black/80 z-40 flex items-center justify-center">
         <div class="glass bg-gray-900/90 p-8 rounded-2xl w-96 text-center relative max-h-[90vh] overflow-y-auto">
-            <button onclick="toggleSettings()" class="absolute top-4 right-4 text-gray-400 hover:text-white z-10">✕</button>
+            <button onclick="toggleSettings()"
+                class="absolute top-4 right-4 text-gray-400 hover:text-white z-10">✕</button>
             <h2 class="text-2xl mb-6 font-bold">Customize Vibe</h2>
 
             <div class="mb-6 text-left">
@@ -182,34 +183,40 @@
 
 
         <!-- Lofi Music Player - Minimal Design -->
-        <div id="music-player" class="hidden fixed bottom-10 left-5 z-50">
-            <!-- Circular YouTube Player -->
-            <div class="relative">
-                <div
-                    class="w-36 h-36 bg-black rounded-full overflow-hidden ring-2 ring-purple-500/60 hover:ring-purple-400 transition-all duration-300 shadow-2xl">
-                    <iframe id="lofi-player" width="100%" height="100%" src="" frameborder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowfullscreen>
-                    </iframe>
-                </div>
 
-                <!-- Label -->
-                <div
-                    class="absolute -bottom-6 left-0 right-0 text-center text-[9px] text-purple-400 font-medium tracking-wider uppercase opacity-70">
-                    Lofi Radio
-                </div>
+    </div>
+
+
+    <!-- Lofi Music Player - Minimal Design -->
+    <div id="music-player" class="hidden fixed bottom-10 left-5 z-50">
+        <!-- Circular YouTube Player -->
+        <div class="relative">
+            <div
+                class="w-36 h-36 bg-black rounded-full overflow-hidden ring-2 ring-purple-500/60 hover:ring-purple-400 transition-all duration-300 shadow-2xl">
+                <iframe id="lofi-player" width="100%" height="100%" src="" frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen>
+                </iframe>
+            </div>
+
+            <!-- Label -->
+            <div
+                class="absolute -bottom-6 left-0 right-0 text-center text-[9px] text-purple-400 font-medium tracking-wider uppercase opacity-70">
+                Lofi Radio
             </div>
         </div>
+    </div>
 
-        <div id="ai-feed"
-            class="fixed bottom-10 right-5 w-36 h-36 ring-4 glass rounded-full overflow-hidden border-2 border-green-500 shadow-xl hidden transition-all object-cover hover:scale-110">
-            <img id="camera-stream" src="{{ url_for('video_feed') }}" class="w-full h-full object-cover opacity-80">
-            <div class="absolute top-1 left-2 text-[10px] text-green-400 font-mono">●</div>
-        </div>
+    <div id="ai-feed"
+        class="fixed bottom-10 right-5 w-36 h-36 ring-4 glass rounded-full overflow-hidden border-2 border-green-500 shadow-xl hidden transition-all object-cover hover:scale-110"
+        style="z-index: 99999;">
+        <img id="camera-stream" src="" class="w-full h-full object-cover opacity-80">
+        <div class="absolute top-1 left-2 text-[10px] text-green-400 font-mono">●</div>
+    </div>
 
-        <audio id="alarm-audio" src=""></audio>
+    <audio id="alarm-audio" src=""></audio>
 
-        <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 
 </html>
