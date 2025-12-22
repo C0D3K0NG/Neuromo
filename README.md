@@ -1,108 +1,109 @@
+<div align="center">
+
 # Neuromo
 
-An AI-powered focus & drowsiness monitoring system that uses computer vision and facial landmark detection to monitor user attention and detect signs of drowsiness in real-time.
+<img src="https://raw.githubusercontent.com/C0D3K0NG/Neuromo/main/static/logo.svg" alt="Neuromo Logo" width="120"/>
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg) ![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg) ![Flask](https://img.shields.io/badge/flask-2.0%2B-green.svg)
+### AI-Powered Focus & Drowsiness Monitoring System
+
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/flask-2.0%2B-green.svg)](https://flask.palletsprojects.com/)
+
+</div>
+
+---
+
+## Overview
+
+Neuromo combines computer vision AI with the Pomodoro Technique to help you maintain focus and combat drowsiness during work sessions. Real-time facial landmark detection monitors your attention while respecting your privacy.
 
 ## Features
 
-### Core AI Monitoring
-*   **Real-time Face Detection**: Utilizes MediaPipe's Face Landmarker for accurate facial landmark detection.
-*   **Drowsiness Detection**: Monitors eye aspect ratio (EAR) to detect drowsiness.
-*   **Focus Tracking**: Analyzes head pose and gaze direction to track user focus.
-*   **Live Video Feed**: Real-time video streaming with visual feedback.
+<img src="https://img.icons8.com/fluency/48/000000/artificial-intelligence.png" width="20"/> **AI Monitoring**
+- Real-time face detection using MediaPipe
+- Drowsiness detection via Eye Aspect Ratio (EAR)
+- Focus tracking through head pose analysis
+- Live video feed with visual feedback
 
-### Smart Pomodoro Timer
-*   **Auto-Loop System**: Automatically cycles between Focus (25m) and Break (5m) sessions.
-*   **Privacy-First Camera**: The AI camera **strictly turns OFF** during break times and automatically reactivates for focus sessions.
-*   **Status Dashboard**: Visual "Focus Time" vs "Break Time" status indicator.
-*   **Time Control**: Quick `+5` / `-5` minute adjustment buttons for flexible session management.
-*   **Audio Cues**: Distinct interval beeps for session transitions and alarms for completion.
+<img src="https://img.icons8.com/fluency/48/000000/tomato.png" width="20"/> **Smart Pomodoro Timer**
+- Auto-loop: 25min Focus → 5min Break
+- Privacy-first: Camera turns OFF during breaks
+- Flexible time controls (+5/-5 min adjustments)
+- Audio cues for session transitions
 
-### Immersive Experience
-*   **Lofi Music Player**: Integrated, distraction-free YouTube music player.
-*   **Dynamic Tab Title**: Real-time timer countdown in the browser tab (e.g., `24:59 - Focus`).
-*   **Native Notifications**: Desktop alerts when a session ends, even if the tab is in the background.
-*   **Safety Features**: Prevents accidental tab closure while the timer is running.
+<img src="https://img.icons8.com/fluency/48/000000/music.png" width="20"/> **Immersive Experience**
+- Integrated Lofi music player
+- Dynamic tab title with countdown
+- Desktop notifications
+- Accidental closure prevention
 
-## Getting Started
+## Installation
 
-### Prerequisites
+```bash
+# Clone repository
+git clone https://github.com/C0D3K0NG/Neuromo.git
+cd Neuromo
 
-*   Python 3.8 or higher
-*   Webcam or camera device
+# Install dependencies
+pip install -r requirements.txt
 
-### Installation
+# Run application
+python app.py
+```
 
-1.  **Clone the repository**
-    ```bash
-    git clone https://github.com/C0D3K0NG/Neuromo.git
-    cd Neuromo
-    ```
-
-2.  **Install dependencies**
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-3.  **Run the application**
-    ```bash
-    python app.py
-    ```
-
-4.  **Access the application**
-    *   Open your browser and navigate to `http://127.0.0.1:8969`
+Access at: `http://127.0.0.1:8969`
 
 ## Project Structure
 
 ```
 Neuromo/
-├── app.py                    # Main Flask application
-├── camera.py                 # Camera and face detection logic
-├── face_landmarker.task      # MediaPipe face landmark model
-├── requirements.txt          # Python dependencies
-├── Aptfile                   # System dependencies
-├── static/                   # Static assets (CSS, JS, images)
-│   ├── background/           # Background images
-│   └── alarm/                # Alarm sounds
-└── pages/                    # HTML templates (dashboard, etc.)
+├── app.py                    # Flask application
+├── camera.py                 # Face detection logic
+├── face_landmarker.task      # MediaPipe model
+├── requirements.txt          # Dependencies
+├── static/                   # CSS, JS, images
+└── pages/                    # HTML templates
 ```
 
 ## Technology Stack
 
-*   **Python**: Core programming language
-*   **Flask**: Lightweight web application framework
-*   **MediaPipe**: Face landmark detection
-*   **OpenCV**: Computer vision and image processing
-*   **NumPy**: Numerical computations
-*   **Gunicorn**: Production WSGI server
+- **Python** - Core language
+- **Flask** - Web framework
+- **MediaPipe** - Face landmark detection
+- **OpenCV** - Computer vision
+- **NumPy** - Numerical computations
+- **Gunicorn** - Production server
 
 ## Usage
 
-1.  Launch the application using `python app.py`
-2.  Navigate to `http://127.0.0.1:8969` in your web browser
-3.  Allow camera access when prompted by your browser
-4.  **Start Focus**: Click "START" to begin the Pomodoro loop. The camera will activate.
-5.  **Take a Break**: When the 25m timer ends, a break session starts automatically, and the camera turns off.
-6.  **Adjust**: Use the `+` / `-` buttons to adjust time if needed (while paused).
+1. Launch: `python app.py`
+2. Open: `http://127.0.0.1:8969`
+3. Allow camera access
+4. Click "START" to begin focus session
+5. Camera auto-disables during breaks
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions welcome! Fork the repo and submit a Pull Request.
 
 ## License
 
-This project is open source and available under the [MIT License](LICENSE).
+MIT License - see [LICENSE](LICENSE) file.
 
 ## Author
 
-**C0D3K0NG**
+**C0D3K0NG** - [GitHub](https://github.com/C0D3K0NG)
 
 ## Acknowledgments
 
-*   MediaPipe team for the excellent face landmark detection model
-*   Flask community for the lightweight and flexible web framework
+- MediaPipe team for face landmark detection
+- Flask community for the web framework
 
 ---
 
-**Note**: This project is designed for educational and research purposes. For production use in safety-critical applications, additional testing and validation would be required.
+<div align="center">
+
+**Note**: For educational and research purposes. Production use in safety-critical applications requires additional testing.
+
+</div>
