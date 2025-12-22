@@ -5,6 +5,7 @@ from mediapipe.tasks.python import vision
 import numpy as np
 import os
 import urllib.request
+import time
 
 class VideoCamera(object):
     def __init__(self):
@@ -46,6 +47,10 @@ class VideoCamera(object):
         self.CONFIDENCE_THRESHOLD = 20
         self.current_status= "Active"
         self.sleep_counter = 0
+        
+        # NEW: Time Tracking Variables
+        self.distraction_start_time = None
+        self.DISTRACTION_LIMIT = 2 * 60
 
     def __del__(self):
         self.video.release()
@@ -121,19 +126,42 @@ class VideoCamera(object):
                     if self.sleep_counter > self.CONFIDENCE_THRESHOLD:
                         status = "SLEEPING !!!"
                         color = (0, 0, 255) # Red
-                        self.current_status = "alarm" # <--- SIGNAL FOR FLASK
-                
-                elif is_looking_away:
-                    self.sleep_counter = 0
-                    status = "DISTRACTED!"
-                    color = (0, 165, 255) # Orange
-                    self.current_status = "alarm" # <--- SIGNAL FOR FLASK
+                        self.current_status = "alarm"
+                    
+                    # Reset distraction timer if sleeping (Sleep takes priority)
+                    self.distraction_start_time = None
 
+                # 2. SECONDARY: DISTRACTION (Looking away - With 5 min buffer)
+                elif is_looking_away:
+                    self.sleep_counter = 0 # Not sleeping
+                    
+                    # A. Start the timer if it hasn't started yet
+                    if self.distraction_start_time is None:
+                        self.distraction_start_time = time.time()
+                    
+                    # B. Check how much time has passed
+                    elapsed_time = time.time() - self.distraction_start_time
+                    remaining_time = self.DISTRACTION_LIMIT - elapsed_time
+                    
+                    if elapsed_time > self.DISTRACTION_LIMIT:
+                        # Time is up! Trigger Alarm
+                        status = "DISTRACTED!"
+                        color = (0, 0, 255) # Red
+                        self.current_status = "alarm"
+                    else:
+                        # Still in "Grace Period" - No Alarm yet
+                        # Optional: Show countdown in text
+                        status = f"Away: {int(remaining_time)}s"
+                        color = (0, 165, 255) # Orange warning
+                        self.current_status = "active"
+
+                # 3. FOCUSED (Reset everything)
                 else:
                     self.sleep_counter = 0
+                    self.distraction_start_time = None # Reset the timer completely
                     status = "Focused"
-                    color = (0, 255, 0)
-                    self.current_status = "active" # <--- SIGNAL FOR FLASK
+                    color = (0, 255, 0) # Green
+                    self.current_status = "active"
 
                 # 3. Draw Visuals on the Frame
                 # ... (Your logic for determining status/color is above this) ...
