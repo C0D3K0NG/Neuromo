@@ -37,6 +37,81 @@ function updateDisplay() {
     let secs = timeLeft % 60;
     document.getElementById('timer-display').innerText =
         `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+
+    // UX: Update Tab Title
+    document.title = `${mins}:${secs < 10 ? '0' : ''}${secs} - ${currentMode === 'pomodoro' ? 'Focus' : 'Break'}`;
+}
+
+// UX: Request Notification Permission
+if ("Notification" in window) {
+    Notification.requestPermission();
+}
+
+function sendNotification(msg) {
+    if (Notification.permission === "granted") {
+        new Notification("Neuromo", { body: msg, icon: "/static/favicon.ico" });
+    }
+}
+
+// UX: Prevent Accidental Close
+window.addEventListener('beforeunload', (e) => {
+    if (isRunning) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+});
+
+function adjustTime(minutes) {
+    if (isRunning) {
+        showToast("Pause timer to adjust time", "error");
+        return;
+    }
+
+    let newTime = timeLeft + (minutes * 60);
+    if (newTime < 60) newTime = 60; // Min 1 min
+    if (newTime > 60 * 60) newTime = 60 * 60; // Max 60 min
+
+    timeLeft = newTime;
+    updateDisplay();
+}
+
+function playIntervalBeep() {
+    const beep = document.getElementById('interval-beep');
+    if (beep) {
+        beep.currentTime = 0;
+        beep.play().catch(e => console.log("Audio play failed:", e));
+    }
+}
+
+function handleTimerComplete() {
+    clearInterval(timerInterval);
+    isRunning = false;
+    document.getElementById('start-btn').innerText = "START";
+
+    // Play Beep
+    playIntervalBeep();
+
+    // Loop Logic
+    if (currentMode === 'pomodoro') {
+        // Focus -> Short Break
+        setMode('short');
+        showToast("Break Time! Relax.", "info");
+        sendNotification("Break Time! Relax.");
+        // Auto-Start
+        setTimeout(() => toggleTimer(), 1000);
+    } else if (currentMode === 'short') {
+        // Short Break -> Focus
+        setMode('pomodoro');
+        showToast("Focus Time! Let's go.", "success");
+        sendNotification("Focus Time! Let's go.");
+        // Auto-Start
+        setTimeout(() => toggleTimer(), 1000);
+    } else {
+        // Long Break -> Stop
+        document.getElementById('alarm-audio').play();
+        toggleCamera(false);
+        alert("Long Break Complete!");
+    }
 }
 
 function toggleTimer() {
@@ -58,7 +133,13 @@ function toggleTimer() {
         btn.innerText = "PAUSE";
 
         // 🟢 START EVERYTHING
-        toggleCamera(true); // Turn on camera
+        if (currentMode === 'pomodoro') {
+            toggleCamera(true); // Turn on camera ONLY for Focus
+        } else {
+            toggleCamera(false); // Ensure OFF for breaks
+        }
+
+        playIntervalBeep(); // Play start beep
 
         timerInterval = setInterval(() => {
             if (timeLeft > 0) {
@@ -66,14 +147,7 @@ function toggleTimer() {
                 updateDisplay();
             } else {
                 // Time's up!
-                clearInterval(timerInterval);
-                document.getElementById('alarm-audio').play();
-
-                // Stop AI when session ends
-                isRunning = false;
-                btn.innerText = "START";
-                toggleCamera(false);
-                alert("Session Complete! Take a break.");
+                handleTimerComplete();
             }
         }, 1000);
     }
@@ -289,15 +363,15 @@ function selectBackground(filename) {
 }
 
 // 11. Keyboard Shortcuts
-document.addEventListener('keydown', function(event) {
+document.addEventListener('keydown', function (event) {
     // Don't trigger shortcuts when typing in input fields
     if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.tagName === 'SELECT') {
         return;
     }
-    
+
     const key = event.key.toLowerCase();
-    
-    switch(key) {
+
+    switch (key) {
         case ' ':
             event.preventDefault();
             toggleTimer();
@@ -350,12 +424,12 @@ function resetTimer() {
     clearInterval(timerInterval);
     isRunning = false;
     document.getElementById('start-btn').innerText = 'START';
-    
+
     // Reset to current mode's time
     if (currentMode === 'pomodoro') timeLeft = 25 * 60;
     if (currentMode === 'short') timeLeft = 5 * 60;
     if (currentMode === 'long') timeLeft = 15 * 60;
-    
+
     updateDisplay();
     stopAlarm();
     toggleCamera(false);
@@ -366,9 +440,9 @@ function resetTimer() {
 function toggleShortcutsGuide() {
     const guide = document.getElementById('shortcuts-guide');
     const arrow = document.getElementById('shortcuts-arrow');
-    
+
     guide.classList.toggle('hidden');
-    
+
     // Rotate arrow icon
     if (guide.classList.contains('hidden')) {
         arrow.innerText = 'expand_more';

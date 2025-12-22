@@ -59,6 +59,12 @@
         <div id="timer-display" class="text-[160px] leading-none time-font drop-shadow-2xl mb-8">25:00</div>
 
         <div class="flex gap-6 items-center">
+            <!-- -5 Min Button -->
+            <button onclick="adjustTime(-5)" class="glass p-3 rounded-full hover:bg-red-500/20 transition duration-300"
+                title="-5 Minutes">
+                <span class="material-icons text-2xl">remove</span>
+            </button>
+
             <button onclick="toggleTimer()" id="start-btn"
                 class="bg-white text-black px-12 py-3 rounded-full text-xl font-bold tracking-widest hover:scale-105 transition">START</button>
 
@@ -69,6 +75,12 @@
 
             <button onclick="toggleSettings()" class="glass p-3 rounded-full hover:rotate-90 transition duration-300">
                 <span class="material-icons text-2xl">settings</span>
+            </button>
+
+            <!-- +5 Min Button -->
+            <button onclick="adjustTime(5)" class="glass p-3 rounded-full hover:bg-green-500/20 transition duration-300"
+                title="+5 Minutes">
+                <span class="material-icons text-2xl">add</span>
             </button>
         </div>
     </div>
@@ -180,10 +192,6 @@
                 </div>
             </div>
         </div>
-
-
-        <!-- Lofi Music Player - Minimal Design -->
-
     </div>
 
 
@@ -215,8 +223,9 @@
     </div>
 
     <audio id="alarm-audio" src=""></audio>
+    <audio id="interval-beep" src="{{ url_for('static', filename='interval-beep.mp3') }}"></audio>
 
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="{{ url_for('static', filename='script.js') }}?v=3"></script>
 </body>
 
 </html>
