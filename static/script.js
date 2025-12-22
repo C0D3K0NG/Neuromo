@@ -542,3 +542,15 @@ function updateStreakDisplay() {
         container.appendChild(dot);
     }
 }
+
+// 14. 3D Tilt Effect
+document.addEventListener('mousemove', (e) => {
+    const card = document.getElementById('main-interface');
+    if (!card) return;
+
+    const xAxis = (window.innerWidth / 2 - e.pageX) / 50; // Reduced sensitivity
+    const yAxis = (window.innerHeight / 2 - e.pageY) / 50;
+
+    card.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+});
+
