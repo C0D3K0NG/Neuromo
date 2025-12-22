@@ -1,7 +1,5 @@
-streamlit
-opencv-python
+flask
 mediapipe
 numpy
-pandas
-pygame
-flask
+opencv-python-headless
+gunicorn
