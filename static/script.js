@@ -105,7 +105,7 @@ function toggleSettings() {
 }
 
 // 7. Music Player Toggle - Simplified Control
-const LOFI_VIDEO_URL = "https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&controls=0&modestbranding=1&loop=1&playlist=jfKfPfyJRdk";
+window.LOFI_VIDEO_URL = "https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&controls=0&modestbranding=1&loop=1&playlist=jfKfPfyJRdk";
 
 function toggleMusic() {
     const musicPlayer = document.getElementById('music-player');
@@ -114,7 +114,7 @@ function toggleMusic() {
     if (musicPlayer.classList.contains('hidden')) {
         // First click: Open player and start music (autoplay=1)
         musicPlayer.classList.remove('hidden');
-        lofiPlayer.src = LOFI_VIDEO_URL;
+        lofiPlayer.src = window.LOFI_VIDEO_URL || "https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&controls=0&modestbranding=1&loop=1&playlist=jfKfPfyJRdk";
     } else {
         // Second click: Close player and stop music
         lofiPlayer.src = ""; // This stops the video completely
@@ -175,3 +175,102 @@ function stopAlarm() {
     aiFeed.classList.remove('border-red-600', 'animate-pulse');
     aiFeed.classList.add('border-green-500');
 }
+
+// Toast Notification System
+function showToast(message, type = 'success') {
+    // Remove existing toast if any
+    const existingToast = document.getElementById('toast-notification');
+    if (existingToast) {
+        existingToast.remove();
+    }
+
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.id = 'toast-notification';
+    toast.className = `fixed top-20 right-5 glass px-6 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-3 transform translate-x-full transition-all duration-300`;
+
+    // Icon based on type
+    const iconName = type === 'success' ? 'check_circle' : type === 'error' ? 'error' : 'info';
+    const bgColor = type === 'success' ? 'bg-green-500/20' : type === 'error' ? 'bg-red-500/20' : 'bg-blue-500/20';
+    const textColor = type === 'success' ? 'text-green-400' : type === 'error' ? 'text-red-400' : 'text-blue-400';
+    const iconColor = type === 'success' ? 'text-green-400' : type === 'error' ? 'text-red-400' : 'text-blue-400';
+
+    toast.innerHTML = `
+        <span class="material-icons ${iconColor}">${iconName}</span>
+        <span class="${textColor} font-medium">${message}</span>
+    `;
+    toast.classList.add(bgColor);
+
+    document.body.appendChild(toast);
+
+    // Animate in
+    setTimeout(() => {
+        toast.classList.remove('translate-x-full');
+    }, 100);
+
+    // Auto dismiss after 3 seconds
+    setTimeout(() => {
+        toast.classList.add('translate-x-full');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// 8. YouTube URL Change Function
+function changeYouTubeUrl(url) {
+    if (!url || url.trim() === '') {
+        showToast('Please enter a valid YouTube URL', 'error');
+        return;
+    }
+
+    // Extract video ID from various YouTube URL formats
+    let videoId = '';
+
+    // Handle youtube.com/watch?v=ID
+    if (url.includes('youtube.com/watch')) {
+        const urlParams = new URLSearchParams(new URL(url).search);
+        videoId = urlParams.get('v');
+    }
+    // Handle youtu.be/ID
+    else if (url.includes('youtu.be/')) {
+        videoId = url.split('youtu.be/')[1].split('?')[0];
+    }
+    // Handle youtube.com/embed/ID
+    else if (url.includes('youtube.com/embed/')) {
+        videoId = url.split('embed/')[1].split('?')[0];
+    }
+
+    if (!videoId) {
+        showToast('Could not extract video ID. Please use a valid YouTube link.', 'error');
+        return;
+    }
+
+    // Build the embed URL with autoplay and loop
+    const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&modestbranding=1&loop=1&playlist=${videoId}`;
+
+    // Update the global URL
+    window.LOFI_VIDEO_URL = embedUrl;
+
+    // Save to localStorage
+    localStorage.setItem('youtubeUrl', embedUrl);
+
+    // If player is currently open, update it
+    const musicPlayer = document.getElementById('music-player');
+    const lofiPlayer = document.getElementById('lofi-player');
+
+    if (!musicPlayer.classList.contains('hidden')) {
+        lofiPlayer.src = embedUrl;
+    }
+
+    showToast('YouTube URL updated successfully!', 'success');
+}
+
+// Load saved YouTube URL on page load
+window.addEventListener('load', function () {
+    const savedUrl = localStorage.getItem('youtubeUrl');
+    if (savedUrl) {
+        window.LOFI_VIDEO_URL = savedUrl;
+        document.getElementById('youtube-url').value = savedUrl;
+    }
+});
+
+
