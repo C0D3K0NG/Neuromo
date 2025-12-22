@@ -41,48 +41,29 @@
     </div>
 
     <div class="absolute top-0 w-full p-6 flex justify-between z-40">
-        <h1 class="text-2xl font-bold tracking-widest">Neuromo</h1>
-        <a href="/" class="glass px-4 py-1 rounded-full text-sm hover:bg-red-500 transition">Logout</a>
+        <button onclick="adjustTime(-5)" class="glass p-3 rounded-full hover:bg-red-500/20 transition duration-300"
+            title="-5 Minutes">
+            <span class="material-icons text-2xl">remove</span>
+        </button>
+
+        <button onclick="toggleTimer()" id="start-btn"
+            class="bg-white text-black px-12 py-3 rounded-full text-xl font-bold tracking-widest hover:scale-105 transition">START</button>
+
+        <button onclick="toggleMusic()" class="glass p-3 rounded-full hover:scale-105 transition duration-300"
+            title="Lofi Music">
+            <span class="material-icons text-2xl">music_note</span>
+        </button>
+
+        <button onclick="toggleSettings()" class="glass p-3 rounded-full hover:rotate-90 transition duration-300">
+            <span class="material-icons text-2xl">settings</span>
+        </button>
+
+        <!-- +5 Min Button -->
+        <button onclick="adjustTime(5)" class="glass p-3 rounded-full hover:bg-green-500/20 transition duration-300"
+            title="+5 Minutes">
+            <span class="material-icons text-2xl">add</span>
+        </button>
     </div>
-
-    <div class="flex flex-col items-center z-10 w-full max-w-4xl">
-
-        <div class="glass rounded-full p-1 flex gap-2 mb-8 scale-110">
-            <button onclick="setMode('pomodoro')"
-                class="px-6 py-2 rounded-full bg-white/20 hover:bg-white/30 transition font-medium">Pomodoro</button>
-            <button onclick="setMode('short')"
-                class="px-6 py-2 rounded-full hover:bg-white/20 transition font-medium">Short Break</button>
-            <button onclick="setMode('long')"
-                class="px-6 py-2 rounded-full hover:bg-white/20 transition font-medium">Long Break</button>
-        </div>
-
-        <div id="timer-display" class="text-[160px] leading-none time-font drop-shadow-2xl mb-8">25:00</div>
-
-        <div class="flex gap-6 items-center">
-            <!-- -5 Min Button -->
-            <button onclick="adjustTime(-5)" class="glass p-3 rounded-full hover:bg-red-500/20 transition duration-300"
-                title="-5 Minutes">
-                <span class="material-icons text-2xl">remove</span>
-            </button>
-
-            <button onclick="toggleTimer()" id="start-btn"
-                class="bg-white text-black px-12 py-3 rounded-full text-xl font-bold tracking-widest hover:scale-105 transition">START</button>
-
-            <button onclick="toggleMusic()" class="glass p-3 rounded-full hover:scale-105 transition duration-300"
-                title="Lofi Music">
-                <span class="material-icons text-2xl">music_note</span>
-            </button>
-
-            <button onclick="toggleSettings()" class="glass p-3 rounded-full hover:rotate-90 transition duration-300">
-                <span class="material-icons text-2xl">settings</span>
-            </button>
-
-            <!-- +5 Min Button -->
-            <button onclick="adjustTime(5)" class="glass p-3 rounded-full hover:bg-green-500/20 transition duration-300"
-                title="+5 Minutes">
-                <span class="material-icons text-2xl">add</span>
-            </button>
-        </div>
     </div>
 
     <div id="settings-modal" class="hidden absolute inset-0 bg-black/80 z-40 flex items-center justify-center">

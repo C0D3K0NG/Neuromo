@@ -164,10 +164,36 @@ function setMode(mode) {
     stopAlarm();
     toggleCamera(false);
 
+    // Update Global Mode
+    currentMode = mode;
+
     // 3. Set Time
-    if (mode === 'pomodoro') timeLeft = 25 * 60;
-    if (mode === 'short') timeLeft = 5 * 60;
-    if (mode === 'long') timeLeft = 15 * 60;
+    const statusBox = document.getElementById('mode-status');
+
+    if (mode === 'pomodoro') {
+        timeLeft = 25 * 60;
+        if (statusBox) {
+            statusBox.innerText = "Focus Time";
+            statusBox.dataset.status = "focus";
+            statusBox.className = "glass px-6 py-2 rounded-lg mb-4 text-sm font-mono tracking-widest uppercase text-green-400 border border-green-500/30";
+        }
+    }
+    if (mode === 'short') {
+        timeLeft = 5 * 60;
+        if (statusBox) {
+            statusBox.innerText = "Break Time";
+            statusBox.dataset.status = "break";
+            statusBox.className = "glass px-6 py-2 rounded-lg mb-4 text-sm font-mono tracking-widest uppercase text-blue-400 border border-blue-500/30";
+        }
+    }
+    if (mode === 'long') {
+        timeLeft = 15 * 60;
+        if (statusBox) {
+            statusBox.innerText = "Long Break";
+            statusBox.dataset.status = "break";
+            statusBox.className = "glass px-6 py-2 rounded-lg mb-4 text-sm font-mono tracking-widest uppercase text-purple-400 border border-purple-500/30";
+        }
+    }
 
     updateDisplay();
 }
@@ -223,9 +249,17 @@ setInterval(() => {
 }, 1000);
 
 // --- HELPER: Turn Camera On/Off ---
+// --- HELPER: Turn Camera On/Off ---
 function toggleCamera(turnOn) {
     const streamImg = document.getElementById('camera-stream');
     const aiFeed = document.getElementById('ai-feed');
+    const statusBox = document.getElementById('mode-status');
+
+    // STRICT CHECK: If status is NOT 'focus', FORCE OFF.
+    if (statusBox && statusBox.dataset.status !== 'focus') {
+        console.log("Camera blocked by status check (Not Focus Mode)");
+        turnOn = false;
+    }
 
     if (turnOn) {
         // 1. Reconnect the stream (Turns Camera Light ON)
