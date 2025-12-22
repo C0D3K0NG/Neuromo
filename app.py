@@ -101,7 +101,7 @@ with col2:
 
 # --- 5. THE MAIN LOOP (The Heart of the App) ---
 # This loop handles Camera + AI + Timer all at once
-cap = cv2.VideoCapture(0)
+cap = None
 
 while True:
     # A. Render the Timer (Static or Running)
@@ -109,17 +109,21 @@ while True:
     timer_html = f'<p class="big-font">{mins:02d}:{secs:02d}</p>'
     timer_text_placeholder.markdown(timer_html, unsafe_allow_html=True)
     
-    # B. If Timer is OFF, just update default status and wait
+    # B. If Timer is OFF, release camera and show ready status
     if not st.session_state.timer_running:
+        # Release camera when not in use
+        if cap is not None:
+            cap.release()
+            cap = None
+        
         status_text_placeholder.markdown('<div class="status-badge" style="color:white; border:1px solid white;">⏸️ READY</div>', unsafe_allow_html=True)
-        # Just grab a frame to keep camera warm, but don't process heavy AI
-        ret, frame = cap.read()
-        if ret:
-            # Convert BGR to RGB for Streamlit
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            camera_placeholder.image(frame, channels="RGB")
+        camera_placeholder.markdown('<div style="text-align:center; padding:20px; background-color:rgba(0,0,0,0.6); border-radius:10px;"><p style="color:#888;">📹 Camera Off</p><p style="color:#666; font-size:14px;">Start the timer to activate AI monitoring</p></div>', unsafe_allow_html=True)
         time.sleep(0.1)
         continue
+    
+    # C. Initialize camera when timer starts
+    if cap is None:
+        cap = cv2.VideoCapture(0)
 
     # C. If Timer is ON -> RUN AI + COUNTDOWN
     ret, frame = cap.read()
