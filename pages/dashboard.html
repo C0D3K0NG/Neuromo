@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neuromo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        /* Default Background */
+        body {
+            background-image: url("{{ url_for('static', filename='background/background1.gif') }}");
+            background-size: cover;
+            background-position: center;
+            transition: background-image 0.5s ease-in-out;
+        }
+        /* Glassmorphism */
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        .time-font { font-family: 'Courier New', monospace; font-weight: bold; }
+    </style>
+</head>
+<body class="h-screen w-full flex flex-col items-center justify-center text-white overflow-hidden relative">
+
+    <div id="loader" class="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center">
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <lottie-player src="{{ url_for('static', filename='loading.json') }}" background="transparent" speed="1" style="width: 300px; height: 300px;" loop autoplay></lottie-player>
+        <p class="mt-4 text-green-400 font-mono animate-pulse">Initializing Neural Link...</p>
+    </div>
+
+    <div class="absolute top-0 w-full p-6 flex justify-between z-40">
+        <h1 class="text-2xl font-bold tracking-widest">Neuromo</h1>
+        <a href="/" class="glass px-4 py-1 rounded-full text-sm hover:bg-red-500 transition">Logout</a>
+    </div>
+
+    <div class="flex flex-col items-center z-10 w-full max-w-4xl">
+        
+        <div class="glass rounded-full p-1 flex gap-2 mb-8 scale-110">
+            <button onclick="setMode('pomodoro')" class="px-6 py-2 rounded-full bg-white/20 hover:bg-white/30 transition font-medium">Pomodoro</button>
+            <button onclick="setMode('short')" class="px-6 py-2 rounded-full hover:bg-white/20 transition font-medium">Short Break</button>
+            <button onclick="setMode('long')" class="px-6 py-2 rounded-full hover:bg-white/20 transition font-medium">Long Break</button>
+        </div>
+
+        <div id="timer-display" class="text-[160px] leading-none time-font drop-shadow-2xl mb-8">25:00</div>
+
+        <div class="flex gap-6 items-center">
+            <button onclick="toggleTimer()" id="start-btn" class="bg-white text-black px-12 py-3 rounded-full text-xl font-bold tracking-widest hover:scale-105 transition">START</button>
+            
+            <button onclick="toggleSettings()" class="glass p-3 rounded-full hover:rotate-90 transition duration-300">
+                <span class="material-icons text-2xl">settings</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="hidden absolute inset-0 bg-black/80 z-40 flex items-center justify-center">
+        <div class="glass bg-gray-900/90 p-8 rounded-2xl w-96 text-center relative">
+            <button onclick="toggleSettings()" class="absolute top-4 right-4 text-gray-400 hover:text-white">✕</button>
+            <h2 class="text-2xl mb-6 font-bold">Customize Vibe</h2>
+            
+            <div class="mb-6 text-left">
+                <label class="text-sm text-gray-400 uppercase">Background</label>
+                <select id="bg-selector" onchange="changeBackground(this.value)" class="w-full mt-2 p-2 bg-gray-800 rounded border border-gray-600">
+                    {% for bg in backgrounds %}
+                    <option value="{{ bg }}">{{ bg }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-6 text-left">
+                <label class="text-sm text-gray-400 uppercase">Alarm Sound</label>
+                <select id="alarm-selector" onchange="changeAlarm(this.value)" class="w-full mt-2 p-2 bg-gray-800 rounded border border-gray-600">
+                    {% for alarm in alarms %}
+                    <option value="{{ alarm }}">{{ alarm }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="mt-4 p-2 rounded bg-green-900/30 text-green-400 text-xs">
+                ✨ Tip: Add more files to static/background folder to see them here!
+            </div>
+        </div>
+    </div>
+
+    <div id="ai-feed" class="fixed bottom-5 right-5 w-48 h-36 glass rounded-xl overflow-hidden border-2 border-green-500 shadow-xl hidden transition-all hover:scale-110">
+        <img src="{{ url_for('video_feed') }}" class="w-full h-full object-cover opacity-80">
+        <div class="absolute top-1 left-2 text-[10px] text-green-400 font-mono">● AI ACTIVE</div>
+    </div>
+
+    <audio id="alarm-audio" src=""></audio>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
