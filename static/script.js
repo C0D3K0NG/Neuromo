@@ -3,6 +3,7 @@ let timerInterval;
 let timeLeft = 25 * 60; // 25 mins default
 let isRunning = false;
 let currentMode = 'pomodoro';
+let totalTime = 25 * 60; // Track total time for progress ring
 
 // 1. Loading Screen (3 Sec Fake Load)
 window.onload = function () {
@@ -40,6 +41,15 @@ function updateDisplay() {
 
     // UX: Update Tab Title
     document.title = `${mins}:${secs < 10 ? '0' : ''}${secs} - ${currentMode === 'pomodoro' ? 'Focus' : 'Break'}`;
+
+    // UX: Update Circular Progress Ring
+    const circle = document.getElementById('progress-ring');
+    if (circle) {
+        const radius = circle.r.baseVal.value;
+        const circumference = 2 * Math.PI * radius;
+        const offset = circumference - (timeLeft / totalTime) * circumference;
+        circle.style.strokeDashoffset = offset;
+    }
 }
 
 // UX: Request Notification Permission
@@ -172,6 +182,7 @@ function setMode(mode) {
 
     if (mode === 'pomodoro') {
         timeLeft = 25 * 60;
+        totalTime = 25 * 60;
         if (statusBox) {
             statusBox.innerText = "Focus Time";
             statusBox.dataset.status = "focus";
@@ -180,6 +191,7 @@ function setMode(mode) {
     }
     if (mode === 'short') {
         timeLeft = 5 * 60;
+        totalTime = 5 * 60;
         if (statusBox) {
             statusBox.innerText = "Break Time";
             statusBox.dataset.status = "break";
@@ -188,6 +200,7 @@ function setMode(mode) {
     }
     if (mode === 'long') {
         timeLeft = 15 * 60;
+        totalTime = 15 * 60;
         if (statusBox) {
             statusBox.innerText = "Long Break";
             statusBox.dataset.status = "break";

@@ -41,29 +41,69 @@
     </div>
 
     <div class="absolute top-0 w-full p-6 flex justify-between z-40">
-        <button onclick="adjustTime(-5)" class="glass p-3 rounded-full hover:bg-red-500/20 transition duration-300"
-            title="-5 Minutes">
-            <span class="material-icons text-2xl">remove</span>
-        </button>
-
-        <button onclick="toggleTimer()" id="start-btn"
-            class="bg-white text-black px-12 py-3 rounded-full text-xl font-bold tracking-widest hover:scale-105 transition">START</button>
-
-        <button onclick="toggleMusic()" class="glass p-3 rounded-full hover:scale-105 transition duration-300"
-            title="Lofi Music">
-            <span class="material-icons text-2xl">music_note</span>
-        </button>
-
-        <button onclick="toggleSettings()" class="glass p-3 rounded-full hover:rotate-90 transition duration-300">
-            <span class="material-icons text-2xl">settings</span>
-        </button>
-
-        <!-- +5 Min Button -->
-        <button onclick="adjustTime(5)" class="glass p-3 rounded-full hover:bg-green-500/20 transition duration-300"
-            title="+5 Minutes">
-            <span class="material-icons text-2xl">add</span>
-        </button>
+        <h1 class="text-2xl font-bold tracking-widest">Neuromo</h1>
+        <a href="/" class="glass px-4 py-1 rounded-full text-sm hover:bg-red-500 transition">Logout</a>
     </div>
+
+    <div class="flex flex-col items-center z-10 w-full max-w-4xl">
+
+        <div class="glass rounded-full p-1 flex gap-2 mb-4 scale-110">
+            <button onclick="setMode('pomodoro')"
+                class="px-6 py-2 rounded-full bg-white/20 hover:bg-white/30 transition font-medium">Pomodoro</button>
+            <button onclick="setMode('short')"
+                class="px-6 py-2 rounded-full hover:bg-white/20 transition font-medium">Short Break</button>
+            <button onclick="setMode('long')"
+                class="px-6 py-2 rounded-full hover:bg-white/20 transition font-medium">Long Break</button>
+        </div>
+
+        <!-- Status Box -->
+        <div id="mode-status" data-status="focus"
+            class="glass px-6 py-2 rounded-lg mb-8 text-sm font-mono tracking-widest uppercase text-green-400 border border-green-500/30">
+            Focus Time
+        </div>
+
+        <!-- Circular Progress Timer -->
+        <div class="relative mb-12 flex items-center justify-center">
+            <!-- SVG Ring -->
+            <svg class="absolute w-[500px] h-[500px] transform -rotate-90 pointer-events-none">
+                <!-- Background Circle -->
+                <circle cx="250" cy="250" r="220" stroke="currentColor" stroke-width="8" fill="transparent"
+                    class="text-gray-700 opacity-30" />
+                <!-- Progress Circle -->
+                <circle id="progress-ring" cx="250" cy="250" r="220" stroke="currentColor" stroke-width="8"
+                    fill="transparent" class="text-green-400 transition-all duration-1000 ease-linear"
+                    stroke-dasharray="1382" stroke-dashoffset="0" stroke-linecap="round" />
+            </svg>
+
+            <!-- Timer Text -->
+            <div id="timer-display" class="text-[140px] leading-none time-font drop-shadow-2xl z-10">25:00</div>
+        </div>
+
+        <div class="flex gap-6 items-center">
+            <!-- -5 Min Button -->
+            <button onclick="adjustTime(-5)" class="glass p-3 rounded-full hover:bg-red-500/20 transition duration-300"
+                title="-5 Minutes">
+                <span class="material-icons text-2xl">remove</span>
+            </button>
+
+            <button onclick="toggleTimer()" id="start-btn"
+                class="bg-white text-black px-12 py-3 rounded-full text-xl font-bold tracking-widest hover:scale-105 transition">START</button>
+
+            <button onclick="toggleMusic()" class="glass p-3 rounded-full hover:scale-105 transition duration-300"
+                title="Lofi Music">
+                <span class="material-icons text-2xl">music_note</span>
+            </button>
+
+            <button onclick="toggleSettings()" class="glass p-3 rounded-full hover:rotate-90 transition duration-300">
+                <span class="material-icons text-2xl">settings</span>
+            </button>
+
+            <!-- +5 Min Button -->
+            <button onclick="adjustTime(5)" class="glass p-3 rounded-full hover:bg-green-500/20 transition duration-300"
+                title="+5 Minutes">
+                <span class="material-icons text-2xl">add</span>
+            </button>
+        </div>
     </div>
 
     <div id="settings-modal" class="hidden absolute inset-0 bg-black/80 z-40 flex items-center justify-center">
@@ -206,7 +246,7 @@
     <audio id="alarm-audio" src=""></audio>
     <audio id="interval-beep" src="{{ url_for('static', filename='interval-beep.mp3') }}"></audio>
 
-    <script src="{{ url_for('static', filename='script.js') }}?v=3"></script>
+    <script src="{{ url_for('static', filename='script.js') }}?v=4"></script>
 </body>
 
 </html>
