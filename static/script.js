@@ -41,19 +41,24 @@ function updateDisplay() {
 
 function toggleTimer() {
     const btn = document.getElementById('start-btn');
-    const aiFeed = document.getElementById('ai-feed');
     
     if (isRunning) {
-        // PAUSE
+        // === USER CLICKED PAUSE ===
         clearInterval(timerInterval);
         isRunning = false;
         btn.innerText = "START";
-        aiFeed.classList.add('hidden'); // Hide AI Camera
+        
+        // 🛑 STOP EVERYTHING
+        stopAlarm();
+        toggleCamera(false); // Turn off camera
+        
     } else {
-        // START
+        // === USER CLICKED START ===
         isRunning = true;
         btn.innerText = "PAUSE";
-        aiFeed.classList.remove('hidden'); // Show AI Camera
+        
+        // 🟢 START EVERYTHING
+        toggleCamera(true); // Turn on camera
         
         timerInterval = setInterval(() => {
             if (timeLeft > 0) {
@@ -62,10 +67,12 @@ function toggleTimer() {
             } else {
                 // Time's up!
                 clearInterval(timerInterval);
-                document.getElementById('alarm-audio').play(); // Play selected alarm
-                aiFeed.classList.add('hidden');
+                document.getElementById('alarm-audio').play(); 
+                
+                // Stop AI when session ends
                 isRunning = false;
                 btn.innerText = "START";
+                toggleCamera(false); 
                 alert("Session Complete! Take a break.");
             }
         }, 1000);
@@ -74,20 +81,80 @@ function toggleTimer() {
 
 // 5. Mode Switcher (Pomodoro / Short / Long)
 function setMode(mode) {
+    // 1. Reset Logic
     clearInterval(timerInterval);
     isRunning = false;
     document.getElementById('start-btn').innerText = "START";
-    document.getElementById('ai-feed').classList.add('hidden');
     
+    // 2. 🛑 FORCE STOP CAMERA & ALARM
+    stopAlarm();
+    toggleCamera(false);
+    
+    // 3. Set Time
     if (mode === 'pomodoro') timeLeft = 25 * 60;
     if (mode === 'short') timeLeft = 5 * 60;
     if (mode === 'long') timeLeft = 15 * 60;
     
     updateDisplay();
 }
-
 // 6. Settings Toggle
 function toggleSettings() {
     const modal = document.getElementById('settings-modal');
     modal.classList.toggle('hidden');
 }
+
+// Check AI status every 1 second
+setInterval(() => {
+    // Only check if timer is running!
+    if (isRunning) {
+        fetch('/status')
+            .then(response => response.json())
+            .then(data => {
+                const aiFeed = document.getElementById('ai-feed');
+                
+                if (data.status === "alarm") {
+                    // Play Alarm
+                    document.getElementById('alarm-audio').play();
+                    
+                    // Visual Warning (Red Border)
+                    aiFeed.classList.remove('border-green-500');
+                    aiFeed.classList.add('border-red-600', 'animate-pulse');
+                } else {
+                    // Back to Normal
+                    document.getElementById('alarm-audio').pause();
+                    aiFeed.classList.remove('border-red-600', 'animate-pulse');
+                    aiFeed.classList.add('border-green-500');
+                }
+            });
+    }
+}, 1000);
+
+
+// --- NEW HELPER: Turn Camera On/Off ---
+function toggleCamera(turnOn) {
+    const streamImg = document.getElementById('camera-stream');
+    const aiFeed = document.getElementById('ai-feed');
+    
+    if (turnOn) {
+        // 1. Reconnect the stream (Turns Camera Light ON)
+        streamImg.src = "/video_feed";
+        aiFeed.classList.remove('hidden');
+    } else {
+        // 2. Disconnect the stream (Turns Camera Light OFF)
+        streamImg.src = ""; 
+        aiFeed.classList.add('hidden');
+    }
+}
+
+// --- NEW HELPER: Stop the Alarm Instantly ---
+function stopAlarm() {
+    const audio = document.getElementById('alarm-audio');
+    audio.pause();       // Stop sound
+    audio.currentTime = 0; // Rewind to start
+    
+    // Remove the red warning border if it exists
+    const aiFeed = document.getElementById('ai-feed');
+    aiFeed.classList.remove('border-red-600', 'animate-pulse');
+    aiFeed.classList.add('border-green-500');
+}
+//end

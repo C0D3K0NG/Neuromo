@@ -36,9 +36,15 @@ class VideoCamera(object):
         self.LEFT_EYE = [386, 374, 263, 362] 
         self.RIGHT_EYE = [159, 145, 33, 133]
         
-        # 5. Tuning Variables
-        self.EAR_THRESHOLD = 0.22
-        self.CONFIDENCE_THRESHOLD = 30
+        # 5. Landmarks for "Distraction" (Head Turn)
+        self.NOSE_TIP = 1
+        self.LEFT_CHEEK = 454
+        self.RIGHT_CHEEK = 234
+        
+        # 6. Tuning Variables
+        self.EAR_THRESHOLD = 0.26
+        self.CONFIDENCE_THRESHOLD = 20
+        self.current_status= "Active"
         self.sleep_counter = 0
 
     def __del__(self):
@@ -85,7 +91,25 @@ class VideoCamera(object):
                 right_ear = self.calculate_ear(face_landmarks, self.RIGHT_EYE, w, h)
                 avg_ear = (left_ear + right_ear) / 2.0
 
-                # 2. Check Drowsiness
+                # 2. Gaze/Head Logic (Distraction)
+                # We check the ratio of the nose to the cheeks
+                nose_x = face_landmarks[self.NOSE_TIP].x
+                left_cheek_x = face_landmarks[self.LEFT_CHEEK].x
+                right_cheek_x = face_landmarks[self.RIGHT_CHEEK].x
+                
+                # Calculate distances
+                dist_left = nose_x - right_cheek_x  # Note: MediaPipe mirrors coordinates usually
+                dist_right = left_cheek_x - nose_x
+                
+                # Check for Head Turn (Distraction)
+                # If nose is too close to one cheek, user is looking away
+                is_looking_away = False
+                if dist_right != 0: # Avoid division by zero
+                    ratio = dist_left / dist_right
+                    if ratio > 3.5 or ratio < 0.25: # Tuned thresholds
+                        is_looking_away = True
+
+                # --- FINAL STATUS DECISION ---
                 if avg_ear < self.EAR_THRESHOLD:
                     self.sleep_counter += 1
                     status = "Drowsy?"
@@ -94,10 +118,19 @@ class VideoCamera(object):
                     if self.sleep_counter > self.CONFIDENCE_THRESHOLD:
                         status = "SLEEPING !!!"
                         color = (0, 0, 255) # Red
+                        self.current_status = "alarm" # <--- SIGNAL FOR FLASK
+                
+                elif is_looking_away:
+                    self.sleep_counter = 0
+                    status = "DISTRACTED!"
+                    color = (0, 165, 255) # Orange
+                    self.current_status = "alarm" # <--- SIGNAL FOR FLASK
+
                 else:
                     self.sleep_counter = 0
                     status = "Focused"
                     color = (0, 255, 0)
+                    self.current_status = "active" # <--- SIGNAL FOR FLASK
 
                 # 3. Draw Visuals on the Frame
                 cv2.putText(frame, f"EAR: {avg_ear:.2f}", (30, 30), 
