@@ -183,6 +183,7 @@ function setMode(mode) {
 
     // 3. Set Time
     const statusBox = document.getElementById('mode-status');
+    const mainInterface = document.getElementById('main-interface');
 
     if (mode === 'pomodoro') {
         timeLeft = 25 * 60;
@@ -191,6 +192,10 @@ function setMode(mode) {
             statusBox.innerText = "Focus Time";
             statusBox.dataset.status = "focus";
             statusBox.className = "glass px-6 py-2 rounded-lg mb-4 text-sm font-mono tracking-widest uppercase text-green-400 border border-green-500/30";
+        }
+        if (mainInterface) {
+            mainInterface.classList.remove('glow-break');
+            mainInterface.classList.add('glow-focus');
         }
     }
     if (mode === 'short') {
@@ -201,6 +206,10 @@ function setMode(mode) {
             statusBox.dataset.status = "break";
             statusBox.className = "glass px-6 py-2 rounded-lg mb-4 text-sm font-mono tracking-widest uppercase text-blue-400 border border-blue-500/30";
         }
+        if (mainInterface) {
+            mainInterface.classList.remove('glow-focus');
+            mainInterface.classList.add('glow-break');
+        }
     }
     if (mode === 'long') {
         timeLeft = 15 * 60;
@@ -209,6 +218,10 @@ function setMode(mode) {
             statusBox.innerText = "Long Break";
             statusBox.dataset.status = "break";
             statusBox.className = "glass px-6 py-2 rounded-lg mb-4 text-sm font-mono tracking-widest uppercase text-purple-400 border border-purple-500/30";
+        }
+        if (mainInterface) {
+            mainInterface.classList.remove('glow-focus');
+            mainInterface.classList.add('glow-break');
         }
     }
 

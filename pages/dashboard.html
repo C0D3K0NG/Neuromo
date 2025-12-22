@@ -28,6 +28,43 @@
             font-family: 'Courier New', monospace;
             font-weight: bold;
         }
+
+        /* Ambient Breathing Glow */
+        @keyframes breathe-focus {
+
+            0%,
+            100% {
+                box-shadow: 0 0 30px rgba(74, 222, 128, 0.1);
+                border-color: rgba(74, 222, 128, 0.2);
+            }
+
+            50% {
+                box-shadow: 0 0 60px rgba(74, 222, 128, 0.3);
+                border-color: rgba(74, 222, 128, 0.4);
+            }
+        }
+
+        @keyframes breathe-break {
+
+            0%,
+            100% {
+                box-shadow: 0 0 30px rgba(96, 165, 250, 0.1);
+                border-color: rgba(96, 165, 250, 0.2);
+            }
+
+            50% {
+                box-shadow: 0 0 60px rgba(96, 165, 250, 0.3);
+                border-color: rgba(96, 165, 250, 0.4);
+            }
+        }
+
+        .glow-focus {
+            animation: breathe-focus 4s infinite ease-in-out;
+        }
+
+        .glow-break {
+            animation: breathe-break 4s infinite ease-in-out;
+        }
     </style>
 </head>
 
@@ -45,9 +82,11 @@
         <a href="/" class="glass px-4 py-1 rounded-full text-sm hover:bg-red-500 transition">Logout</a>
     </div>
 
-    <div class="flex flex-col items-center z-10 w-full max-w-4xl">
+    <!-- Main Interface Container -->
+    <div id="main-interface"
+        class="glass rounded-3xl p-10 flex flex-col items-center z-10 w-full max-w-2xl transition-all duration-1000 glow-focus">
 
-        <div class="glass rounded-full p-1 flex gap-2 mb-4 scale-110">
+        <div class="glass rounded-full p-1 flex gap-2 mb-8 scale-110">
             <button onclick="setMode('pomodoro')"
                 class="px-6 py-2 rounded-full bg-white/20 hover:bg-white/30 transition font-medium">Pomodoro</button>
             <button onclick="setMode('short')"
@@ -65,18 +104,18 @@
         <!-- Circular Progress Timer -->
         <div class="relative mb-8 flex items-center justify-center">
             <!-- SVG Ring -->
-            <svg class="absolute w-[500px] h-[500px] transform -rotate-90 pointer-events-none">
+            <svg class="absolute w-[400px] h-[400px] transform -rotate-90 pointer-events-none">
                 <!-- Background Circle -->
-                <circle cx="250" cy="250" r="220" stroke="currentColor" stroke-width="8" fill="transparent"
+                <circle cx="200" cy="200" r="180" stroke="currentColor" stroke-width="8" fill="transparent"
                     class="text-gray-700 opacity-30" />
                 <!-- Progress Circle -->
-                <circle id="progress-ring" cx="250" cy="250" r="220" stroke="currentColor" stroke-width="8"
+                <circle id="progress-ring" cx="200" cy="200" r="180" stroke="currentColor" stroke-width="8"
                     fill="transparent" class="text-green-400 transition-all duration-1000 ease-linear"
-                    stroke-dasharray="1382" stroke-dashoffset="0" stroke-linecap="round" />
+                    stroke-dasharray="1131" stroke-dashoffset="0" stroke-linecap="round" />
             </svg>
 
             <!-- Timer Text -->
-            <div id="timer-display" class="text-[140px] leading-none time-font drop-shadow-2xl z-10">25:00</div>
+            <div id="timer-display" class="text-[100px] leading-none time-font drop-shadow-2xl z-10">25:00</div>
         </div>
 
         <!-- Session Streak Tracker -->
