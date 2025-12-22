@@ -71,6 +71,7 @@ def get_status():
     return jsonify({'status': global_camera.current_status})
 
 if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 8969))
     # Run on all IPs (0.0.0.0) so you can access it, debug mode ON for errors
-    print("🟢 Starting Server on http://127.0.0.1:5000")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    print("🟢 Starting Server on http://127.0.0.1:8969")
+    app.run(host='0.0.0.0', port=port)
