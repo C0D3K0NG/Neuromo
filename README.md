@@ -8,6 +8,8 @@ An AI-powered focus & drowsiness monitoring system that uses computer vision and
 - **Drowsiness Detection**: Monitors eye aspect ratio (EAR) to detect drowsiness
 - **Focus Tracking**: Analyzes head pose and gaze direction to track user focus
 - **Live Video Feed**: Real-time video streaming with visual feedback
+- **Lofi Music Player**: Integrated lofi music player to enhance focus and productivity
+- **Pomodoro Timer**: Built-in Pomodoro timer with customizable work and break sessions
 - **Web-based Interface**: Simple and intuitive web interface built with Flask
 
 ## 🚀 Getting Started
