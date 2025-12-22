@@ -4,6 +4,7 @@ let timeLeft = 25 * 60; // 25 mins default
 let isRunning = false;
 let currentMode = 'pomodoro';
 let totalTime = 25 * 60; // Track total time for progress ring
+let sessionCount = 0; // Track completed focus sessions
 
 // 1. Loading Screen (3 Sec Fake Load)
 window.onload = function () {
@@ -19,6 +20,7 @@ window.onload = function () {
     if (alarmSelect.options.length > 0) {
         changeAlarm(alarmSelect.options[0].value);
     }
+    updateStreakDisplay();
 };
 
 // 2. Change Background Dynamically
@@ -104,6 +106,8 @@ function handleTimerComplete() {
     // Loop Logic
     if (currentMode === 'pomodoro') {
         // Focus -> Short Break
+        sessionCount++;
+        updateStreakDisplay();
         setMode('short');
         showToast("Break Time! Relax.", "info");
         sendNotification("Break Time! Relax.");
@@ -495,5 +499,33 @@ function toggleShortcutsGuide() {
         arrow.innerText = 'expand_more';
     } else {
         arrow.innerText = 'expand_less';
+    }
+}
+
+// 13. Update Streak Display
+function updateStreakDisplay() {
+    const container = document.getElementById('streak-container');
+    if (!container) return;
+
+    // Clear current dots (keep the label if possible, but easier to rebuild)
+    container.innerHTML = '<span class="text-xs text-gray-500 font-mono mr-2">SESSION</span>';
+
+    // Max dots to show (e.g., 4 per set)
+    const totalDots = 4;
+    const filledDots = sessionCount % totalDots; // Cycle every 4
+
+    // If we just finished a set of 4, show all filled
+    const displayFilled = (sessionCount > 0 && filledDots === 0) ? 4 : filledDots;
+
+    for (let i = 0; i < totalDots; i++) {
+        const dot = document.createElement('div');
+        if (i < displayFilled) {
+            // Filled Dot
+            dot.className = "w-3 h-3 rounded-full bg-green-400 shadow-[0_0_10px_rgba(74,222,128,0.5)]";
+        } else {
+            // Empty Dot
+            dot.className = "w-3 h-3 rounded-full bg-gray-700/50 border border-gray-600";
+        }
+        container.appendChild(dot);
     }
 }
