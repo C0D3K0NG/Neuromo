@@ -1,9 +1,10 @@
 import os
-from flask import Flask, render_template, Response, request, redirect, url_for
+from flask import Flask, render_template, Response, request, redirect, url_for, jsonify
 
 # 1. SETUP FLASK TO WORK WITH YOUR FOLDER STRUCTURE
 # We explicitly tell Flask: "My HTML is in 'pages', not 'templates'"
 app = Flask(__name__, template_folder='pages', static_folder='static')
+
 
 # Import the camera logic (Must be in the same folder as app.py)
 try:
@@ -25,6 +26,8 @@ def get_files(folder_name):
     print(f"📂 Loaded {len(files)} files from {folder_name}")
     return files
 
+# Create the camera object ONCE so we can read its status
+global_camera = VideoCamera()
 # --- ROUTES ---
 
 @app.route('/')
@@ -57,10 +60,15 @@ def gen(camera):
 
 @app.route('/video_feed')
 def video_feed():
-    if not CAMERA_AVAILABLE:
-        return "Camera Error"
-    return Response(gen(VideoCamera()),
+    # Use the global camera instead of creating a new one every time
+    return Response(gen(global_camera),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
+    
+
+@app.route('/status')
+def get_status():
+    # This lets JS ask "What is the status?"
+    return jsonify({'status': global_camera.current_status})
 
 if __name__ == '__main__':
     # Run on all IPs (0.0.0.0) so you can access it, debug mode ON for errors
