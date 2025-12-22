@@ -85,9 +85,9 @@
         </div>
     </div>
 
-    <div id="ai-feed" class="fixed bottom-5 right-5 w-48 h-36 glass rounded-xl overflow-hidden border-2 border-green-500 shadow-xl hidden transition-all hover:scale-110">
+    <div id="ai-feed" class="fixed bottom-5 right-5 w-36 h-36 ring-4 glass rounded-full overflow-hidden border-2 border-green-500 shadow-xl hidden transition-all object-cover hover:scale-110">
         <img id="camera-stream" src="{{ url_for('video_feed') }}" class="w-full h-full object-cover opacity-80">
-        <div class="absolute top-1 left-2 text-[10px] text-green-400 font-mono">● AI ACTIVE</div>
+        <div class="absolute top-1 left-2 text-[10px] text-green-400 font-mono">●</div>
     </div>
 
     <audio id="alarm-audio" src=""></audio>
