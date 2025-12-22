@@ -50,7 +50,7 @@ class VideoCamera(object):
         
         # NEW: Time Tracking Variables
         self.distraction_start_time = None
-        self.DISTRACTION_LIMIT = 2 * 60
+        self.DISTRACTION_LIMIT = 2 * 2
 
     def __del__(self):
         self.video.release()
