@@ -79,13 +79,34 @@
             <h2 class="text-2xl mb-6 font-bold">Customize Vibe</h2>
 
             <div class="mb-6 text-left">
-                <label class="text-sm text-gray-400 uppercase">Background</label>
+                <div class="flex items-center justify-between mb-2">
+                    <label class="text-sm text-gray-400 uppercase">Background</label>
+                    <button onclick="toggleBackgroundPreview()" class="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1">
+                        <span class="material-icons text-sm">visibility</span>
+                        Preview
+                    </button>
+                </div>
                 <select id="bg-selector" onchange="changeBackground(this.value)"
                     class="w-full mt-2 p-2 bg-gray-800 rounded border border-gray-600">
                     {% for bg in backgrounds %}
                     <option value="{{ bg }}">{{ bg }}</option>
                     {% endfor %}
                 </select>
+                
+                <!-- Background Preview Gallery -->
+                <div id="bg-preview-gallery" class="hidden mt-3 grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 bg-gray-800/50 rounded">
+                    {% for bg in backgrounds %}
+                    <div onclick="selectBackground('{{ bg }}')" 
+                        class="relative cursor-pointer group rounded overflow-hidden aspect-video hover:ring-2 hover:ring-purple-400 transition">
+                        <img src="{{ url_for('static', filename='background/' + bg) }}" 
+                            class="w-full h-full object-cover"
+                            alt="{{ bg }}">
+                        <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                            <span class="text-white text-xs">{{ bg }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
 
             <div class="mb-6 text-left">
@@ -145,3 +166,4 @@
 </body>
 
 </html>
+

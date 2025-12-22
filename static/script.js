@@ -274,3 +274,16 @@ window.addEventListener('load', function () {
 });
 
 
+
+// 9. Background Preview Gallery Toggle
+function toggleBackgroundPreview() {
+    const gallery = document.getElementById('bg-preview-gallery');
+    gallery.classList.toggle('hidden');
+}
+
+// 10. Select Background from Preview
+function selectBackground(filename) {
+    changeBackground(filename);
+    document.getElementById('bg-selector').value = filename;
+    showToast('Background changed!', 'success');
+}
