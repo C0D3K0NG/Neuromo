@@ -3,7 +3,13 @@ let timerInterval;
 let timeLeft = 25 * 60; // 25 mins default
 let isRunning = false;
 let currentMode = 'pomodoro';
+
 let sessionCount = 0; // Track completed focus sessions
+
+// TASK SYSTEM STATE
+let tasks = [];
+let currentTaskId = null;
+let newTaskPriority = 1;
 
 // 1. Loading Screen (3 Sec Fake Load)
 // 1. Loading Screen (3 Sec Fake Load)
@@ -30,7 +36,13 @@ window.onload = function () {
     if (alarmSelect.options.length > 0) {
         changeAlarm(alarmSelect.options[0].value);
     }
+    if (alarmSelect.options.length > 0) {
+        changeAlarm(alarmSelect.options[0].value);
+    }
     updateStreakDisplay();
+
+    // TASK SYSTEM: Load Tasks
+    fetchTasks();
 };
 
 // 2. Change Background Dynamically
@@ -112,6 +124,11 @@ function handleTimerComplete() {
 
         // ANALYTICS: Save Session
         saveSessionToDB('pomodoro', 25 * 60);
+
+        // TASK SYSTEM: Track Time
+        if (currentTaskId) {
+            updateTaskTime(currentTaskId, 25 * 60);
+        }
 
         setMode('short');
         showToast("Break Time! Relax.", "info");
@@ -712,3 +729,248 @@ function renderHistoryChart(history) {
         }
     });
 }
+
+// ==========================================
+// 15. ADVANCED TASK SYSTEM
+// ==========================================
+
+function toggleTaskSidebar() {
+    const sidebar = document.getElementById('task-sidebar');
+    if (sidebar.classList.contains('translate-x-full')) {
+        sidebar.classList.remove('translate-x-full');
+    } else {
+        sidebar.classList.add('translate-x-full');
+    }
+}
+
+function toggleTaskView() {
+    const view = document.getElementById('task-view');
+    const mainInterface = document.getElementById('main-interface');
+
+    // Close Sidebar if open
+    document.getElementById('task-sidebar').classList.add('translate-x-full');
+
+    if (view.classList.contains('hidden')) {
+        // OPEN
+        view.classList.remove('hidden');
+        setTimeout(() => view.classList.remove('opacity-0', 'scale-95'), 10);
+        mainInterface.classList.add('blur-sm', 'brightness-50');
+    } else {
+        // CLOSE
+        view.classList.add('opacity-0', 'scale-95');
+        mainInterface.classList.remove('blur-sm', 'brightness-50');
+        setTimeout(() => view.classList.add('hidden'), 300);
+    }
+}
+
+// --- DATA LOGIC ---
+
+async function fetchTasks() {
+    const token = localStorage.getItem('user_token');
+    if (!token) return;
+
+    try {
+        const res = await fetch('/api/tasks', { headers: { 'X-User-Token': token } });
+        tasks = await res.json();
+        renderTasks(); // Updates both Sidebar and Overlay
+    } catch (e) {
+        console.error("Failed to fetch tasks:", e);
+    }
+}
+
+async function addTask() {
+    const input = document.getElementById('new-task-input');
+    const title = input.value.trim();
+    if (!title) return showToast("Enter a task title!", "error");
+
+    const token = localStorage.getItem('user_token');
+
+    try {
+        const res = await fetch('/api/tasks', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-User-Token': token },
+            body: JSON.stringify({ title: title, priority: newTaskPriority })
+        });
+
+        if (res.ok) {
+            input.value = ""; // Clear input
+            showToast("Task added!", "success");
+            fetchTasks(); // Reload
+        }
+    } catch (e) {
+        console.error("Add task failed:", e);
+    }
+}
+
+async function toggleTaskComplete(id, currentStatus) {
+    const token = localStorage.getItem('user_token');
+    try {
+        await fetch(`/api/tasks/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-User-Token': token },
+            body: JSON.stringify({ is_completed: !currentStatus })
+        });
+        fetchTasks(); // Refresh to re-sort/move
+    } catch (e) {
+        console.error("Update failed:", e);
+    }
+}
+
+async function deleteTask(id) {
+    if (!confirm("Delete this task?")) return;
+    const token = localStorage.getItem('user_token');
+    try {
+        await fetch(`/api/tasks/${id}`, {
+            method: 'DELETE',
+            headers: { 'X-User-Token': token }
+        });
+        fetchTasks();
+        showToast("Task deleted", "success");
+    } catch (e) {
+        console.error("Delete failed:", e);
+    }
+}
+
+async function updateTaskTime(id, seconds) {
+    const token = localStorage.getItem('user_token');
+    try {
+        await fetch(`/api/tasks/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-User-Token': token },
+            body: JSON.stringify({ add_seconds: seconds })
+        });
+        console.log(`⏱️ Added ${seconds}s to Task ${id}`);
+        // We do NOT call fetchTasks() here to avoid re-rendering entire UI during focus session end
+        // But maybe we should to update the sidebar time? Yes.
+        fetchTasks();
+    } catch (e) {
+        console.error("Time update failed:", e);
+    }
+}
+
+// --- HELPER: Save Session to DB ---
+async function saveSessionToDB(type, duration) {
+    const token = localStorage.getItem('user_token');
+    if (!token) return;
+
+    try {
+        await fetch('/api/session/complete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-User-Token': token },
+            body: JSON.stringify({ type: type, duration: duration })
+        });
+        console.log(`💾 Session saved: ${type} (${duration}s)`);
+    } catch (e) {
+        console.error("Save session failed:", e);
+    }
+}
+
+// --- UI RENDERING ---
+
+function setNewTaskPriority(p) {
+    newTaskPriority = p;
+    // Update UI stars
+    document.querySelectorAll('.star-btn').forEach(btn => {
+        const val = parseInt(btn.dataset.val);
+        if (val <= p) btn.classList.add('text-yellow-400');
+        else btn.classList.remove('text-yellow-400');
+    });
+}
+
+function setActiveTask(id) {
+    currentTaskId = id;
+    renderTasks(); // Re-render to show active state
+
+    // Update Dashboard UI (Show toast)
+    const task = tasks.find(t => t.id === id);
+    if (task) {
+        showToast(`Focusing on: ${task.title}`, "info");
+    }
+}
+
+function formatTime(seconds) {
+    if (!seconds) return "0m";
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    if (h > 0) return `${h}h ${m}m`;
+    return `${m}m`;
+}
+
+function renderTasks() {
+    const sidebarList = document.getElementById('sidebar-task-list');
+    const fullList = document.getElementById('full-task-list');
+
+    if (!sidebarList || !fullList) return;
+
+    sidebarList.innerHTML = '';
+    fullList.innerHTML = '';
+
+    // Sort: Active first, then by Priority
+
+    if (tasks.length === 0) {
+        sidebarList.innerHTML = '<p class="text-xs text-gray-500 text-center italic mt-10">No active tasks.</p>';
+        fullList.innerHTML = '<p class="text-gray-500 text-center col-span-2 italic mt-10">No tasks created yet.</p>';
+        return;
+    }
+
+    // Clone tasks to avoid mutating state order if we want, but sort is fine
+    // Sort orders: Uncompleted first, then Priority DESC, then ID DESC
+    // BUT Active task should be topmost in Sidebar
+
+    // We already get sorted data from API mostly, but Active Task styling handles visibility.
+
+    tasks.forEach(task => {
+        // 1. SIDEBAR ITEM
+        if (!task.is_completed) {
+            const isActive = task.id === currentTaskId;
+            const sidebarItem = document.createElement('div');
+            sidebarItem.className = `relative glass p-3 rounded-lg flex items-center gap-3 transition cursor-pointer group ${isActive ? 'border-l-4 border-green-400 bg-white/10' : 'hover:bg-white/5'}`;
+            sidebarItem.innerHTML = `
+                <button onclick="event.stopPropagation(); toggleTaskComplete(${task.id}, ${task.is_completed})" class="text-gray-500 hover:text-green-400 transition z-10">
+                    <span class="material-icons text-lg">radio_button_unchecked</span>
+                </button>
+                <div class="flex-grow min-w-0" onclick="setActiveTask(${task.id})">
+                    <h4 class="text-sm font-medium truncate ${isActive ? 'text-green-400' : 'text-gray-300 group-hover:text-white'}">${task.title}</h4>
+                    <div class="flex items-center gap-2">
+                         <span class="flex text-[8px] text-yellow-500 tracking-tighter">${'★'.repeat(task.priority)}</span>
+                         <span class="text-[10px] text-gray-500 ml-auto">${formatTime(task.total_seconds)}</span>
+                    </div>
+                </div>
+            `;
+            sidebarList.appendChild(sidebarItem);
+        }
+
+        // 2. FULL OVERLAY ITEM
+        const fullItem = document.createElement('div');
+        fullItem.className = `relative glass p-4 rounded-xl flex items-center justify-between group ${task.is_completed ? 'opacity-50' : ''}`;
+        fullItem.innerHTML = `
+            <div class="flex items-center gap-4 flex-grow">
+                <button onclick="toggleTaskComplete(${task.id}, ${task.is_completed})" class="text-gray-400 hover:text-green-400 transition">
+                    <span class="material-icons text-2xl">${task.is_completed ? 'check_circle' : 'radio_button_unchecked'}</span>
+                </button>
+                <div>
+                     <h3 class="text-lg font-bold ${task.is_completed ? 'line-through text-gray-500' : 'text-white'}">${task.title}</h3>
+                     <div class="flex items-center gap-3 mt-1">
+                        <span class="flex text-yellow-500 text-xs">${'★'.repeat(task.priority)}</span>
+                        <span class="text-xs font-mono text-gray-400 bg-black/30 px-2 py-0.5 rounded">⏱ ${formatTime(task.total_seconds)}</span>
+                     </div>
+                </div>
+            </div>
+            <button onclick="event.stopPropagation(); window.deleteTask(${task.id})" class="text-gray-500 hover:text-red-400 transition bg-white/5 hover:bg-white/10 p-2 rounded-full absolute right-4 opacity-100">
+                <span class="material-icons text-sm">delete</span>
+            </button>
+        `;
+        fullList.appendChild(fullItem);
+    });
+}
+
+// --- EXPOSE GLOBALS ---
+window.toggleTaskSidebar = toggleTaskSidebar;
+window.toggleTaskView = toggleTaskView;
+window.fetchTasks = fetchTasks;
+window.addTask = addTask;
+window.toggleTaskComplete = toggleTaskComplete;
+window.deleteTask = deleteTask;
+window.updateTaskTime = updateTaskTime;
+window.setNewTaskPriority = setNewTaskPriority;
+window.setActiveTask = setActiveTask;

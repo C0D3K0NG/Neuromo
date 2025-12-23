@@ -42,6 +42,17 @@ def init_db():
                         type TEXT NOT NULL,
                         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
                     )''')
+
+        # 3. Tasks Table (Advanced Task System)
+        c.execute('''CREATE TABLE IF NOT EXISTS tasks (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_token TEXT NOT NULL,
+                        title TEXT NOT NULL,
+                        priority INTEGER DEFAULT 1,
+                        is_completed BOOLEAN DEFAULT 0,
+                        total_seconds INTEGER DEFAULT 0,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                    )''')
         
         conn.commit()
         conn.close()
@@ -64,7 +75,23 @@ def get_files(folder_name):
     return files
 
 # Create the camera object ONCE so we can read its status
-global_camera = VideoCamera()
+if CAMERA_AVAILABLE:
+    try:
+        global_camera = VideoCamera()
+    except Exception as e:
+        print(f"❌ Camera init failed: {e}")
+        CAMERA_AVAILABLE = False
+
+if not CAMERA_AVAILABLE:
+    # Fallback Mock Camera to prevent crashes
+    class MockCamera:
+        def __init__(self):
+            self.stats = {'distracted': 0, 'sleep': 0}
+            self.current_status = "camera_disabled"
+        def get_frame(self):
+            return None # Will return blank/None to gen()
+    global_camera = MockCamera()
+    print("⚠️ Using Mock Camera (Feature Disabled)")
 
 # --- ROUTES ---
 
@@ -191,6 +218,92 @@ def complete_session():
         
     except Exception as e:
         print(f"❌ Error saving session: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# --- API ENDPOINTS (For Task System) ---
+
+@app.route('/api/tasks', methods=['GET'])
+def get_tasks():
+    """Fetch all tasks for a user, ordered by Priority DESC, then Created DESC"""
+    user_token = request.headers.get('X-User-Token')
+    if not user_token: return jsonify([])
+
+    try:
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        c.execute("SELECT id, title, priority, is_completed, total_seconds FROM tasks WHERE user_token=? ORDER BY is_completed ASC, priority DESC, created_at DESC", (user_token,))
+        tasks = [{'id': r[0], 'title': r[1], 'priority': r[2], 'is_completed': bool(r[3]), 'total_seconds': r[4]} for r in c.fetchall()]
+        conn.close()
+        return jsonify(tasks)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/tasks', methods=['POST'])
+def create_task():
+    """Create a new task"""
+    user_token = request.headers.get('X-User-Token')
+    data = request.json
+    if not user_token or not data.get('title'): return jsonify({'error': 'Missing data'}), 400
+
+    try:
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        c.execute("INSERT INTO tasks (user_token, title, priority) VALUES (?, ?, ?)", 
+                  (user_token, data['title'], data.get('priority', 1)))
+        conn.commit()
+        task_id = c.lastrowid
+        conn.close()
+        return jsonify({'id': task_id, 'status': 'success'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/tasks/<int:task_id>', methods=['PUT'])
+def update_task(task_id):
+    """Update task status, priority, or add time"""
+    user_token = request.headers.get('X-User-Token')
+    data = request.json
+    if not user_token: return jsonify({'error': 'Token missing'}), 400
+
+    try:
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        
+        # Verify ownership
+        c.execute("SELECT user_token FROM tasks WHERE id=?", (task_id,))
+        row = c.fetchone()
+        if not row or row[0] != user_token:
+            conn.close()
+            return jsonify({'error': 'Unauthorized'}), 403
+
+        if 'is_completed' in data:
+            c.execute("UPDATE tasks SET is_completed=? WHERE id=?", (data['is_completed'], task_id))
+        
+        if 'priority' in data:
+            c.execute("UPDATE tasks SET priority=? WHERE id=?", (data['priority'], task_id))
+
+        if 'add_seconds' in data:
+            c.execute("UPDATE tasks SET total_seconds = total_seconds + ? WHERE id=?", (data['add_seconds'], task_id))
+            
+        conn.commit()
+        conn.close()
+        return jsonify({'status': 'success'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/tasks/<int:task_id>', methods=['DELETE'])
+def delete_task(task_id):
+    """Delete a task"""
+    user_token = request.headers.get('X-User-Token')
+    if not user_token: return jsonify({'error': 'Token missing'}), 400
+
+    try:
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        c.execute("DELETE FROM tasks WHERE id=? AND user_token=?", (task_id, user_token))
+        conn.commit()
+        conn.close()
+        return jsonify({'status': 'success'})
+    except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 

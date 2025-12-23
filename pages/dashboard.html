@@ -87,11 +87,18 @@
                 class="text-2xl font-bold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-600">
                 Neuromo</h1>
         </div>
-        <button onclick="toggleAnalyticsView()"
-            class="glass px-4 py-1 rounded-full text-sm hover:bg-green-500/20 transition flex items-center gap-2">
-            <span class="material-icons text-sm">insights</span>
-            Infographics
-        </button>
+        <div class="flex items-center gap-4">
+            <button onclick="toggleAnalyticsView()"
+                class="glass px-4 py-1 rounded-full text-sm hover:bg-green-500/20 transition flex items-center gap-2">
+                <span class="material-icons text-sm">insights</span>
+                Infographics
+            </button>
+            <button onclick="toggleTaskSidebar()"
+                class="glass px-4 py-1 rounded-full text-sm hover:bg-green-500/20 transition flex items-center gap-2">
+                <span class="material-icons text-sm">checklist</span>
+                Tasks
+            </button>
+        </div>
     </div>
 
     <!-- Main Interface Container (Removed Glass & Glow) -->
@@ -291,6 +298,83 @@
 
     <audio id="alarm-audio" src=""></audio>
     <audio id="interval-beep" src="{{ url_for('static', filename='interval-beep.mp3') }}"></audio>
+
+    <!-- TASK SIDEBAR (Hidden by default) -->
+    <div id="task-sidebar"
+        class="fixed top-0 right-0 h-full w-80 glass border-l border-white/10 z-50 transform translate-x-full transition-transform duration-300 flex flex-col p-6 bg-gray-900/90 backdrop-blur-xl">
+        <div class="flex justify-between items-center mb-6">
+            <h2
+                class="text-xl font-bold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-600">
+                Tasks</h2>
+            <button onclick="toggleTaskSidebar()" class="text-gray-400 hover:text-white transition">
+                <span class="material-icons">close</span>
+            </button>
+        </div>
+
+        <!-- Active Task List -->
+        <div id="sidebar-task-list" class="flex-grow overflow-y-auto space-y-3 mb-4 pr-1">
+            <!-- Injected by JS -->
+            <p class="text-xs text-gray-500 text-center italic mt-10">No active tasks.</p>
+        </div>
+
+        <!-- Manage All Button -->
+        <button onclick="toggleTaskView()"
+            class="w-full glass py-3 rounded-xl hover:bg-white/10 transition flex items-center justify-center gap-2 group">
+            <span class="material-icons text-sm text-gray-400 group-hover:text-white">launch</span>
+            <span class="text-sm font-bold tracking-wider text-gray-300 group-hover:text-white">MANAGE ALL</span>
+        </button>
+    </div>
+
+    <!-- TASK MANAGER OVERLAY -->
+    <div id="task-view"
+        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xl transition-all duration-300 transform opacity-0 scale-95">
+
+        <!-- Main Container -->
+        <div class="glass w-[90%] h-[90%] rounded-3xl flex flex-col p-6 relative overflow-hidden bg-gray-900/40">
+            <!-- Header -->
+            <div class="flex justify-between items-start mb-6 border-b border-white/10 pb-4">
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleTaskView()"
+                        class="glass px-3 py-1.5 rounded-full flex items-center gap-2 hover:bg-white/10 transition group">
+                        <span
+                            class="material-icons text-gray-400 text-sm group-hover:text-white transition">arrow_back</span>
+                        <span class="text-xs font-medium text-gray-300 group-hover:text-white transition">Back</span>
+                    </button>
+                    <div>
+                        <h1
+                            class="text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-emerald-600">
+                            Task Command Center
+                        </h1>
+                        <p class="text-gray-400 text-[10px]">Manage your priorities.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="flex gap-4 mb-8">
+                <input type="text" id="new-task-input" placeholder="What needs to be done?"
+                    class="flex-grow glass bg-transparent border-none text-white placeholder-gray-500 focus:ring-0 text-lg px-6 py-4 rounded-xl outline-none">
+                <div class="flex items-center gap-2 glass px-4 rounded-xl">
+                    <span class="text-xs text-gray-400 uppercase font-bold mr-2">Priority</span>
+                    <button onclick="setNewTaskPriority(1)"
+                        class="star-btn text-2xl text-gray-600 hover:text-yellow-400 transition" data-val="1">★</button>
+                    <button onclick="setNewTaskPriority(2)"
+                        class="star-btn text-2xl text-gray-600 hover:text-yellow-400 transition" data-val="2">★</button>
+                    <button onclick="setNewTaskPriority(3)"
+                        class="star-btn text-2xl text-gray-600 hover:text-yellow-400 transition" data-val="3">★</button>
+                </div>
+                <button onclick="addTask()"
+                    class="bg-gradient-to-r from-green-500 to-emerald-600 px-8 rounded-xl font-bold tracking-widest hover:scale-105 transition shadow-lg uppercase text-sm">
+                    Add
+                </button>
+            </div>
+
+            <!-- Full Task List -->
+            <div id="full-task-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto pb-10 pr-2">
+                <!-- Injected by JS -->
+            </div>
+        </div>
+    </div>
 
     <!-- ANALYTICS OVERLAY (Hidden by default) -->
     <div id="analytics-view"
