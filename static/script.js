@@ -3,7 +3,6 @@ let timerInterval;
 let timeLeft = 25 * 60; // 25 mins default
 let isRunning = false;
 let currentMode = 'pomodoro';
-let totalTime = 25 * 60; // Track total time for progress ring
 let sessionCount = 0; // Track completed focus sessions
 
 // 1. Loading Screen (3 Sec Fake Load)
@@ -43,15 +42,6 @@ function updateDisplay() {
 
     // UX: Update Tab Title
     document.title = `${mins}:${secs < 10 ? '0' : ''}${secs} - ${currentMode === 'pomodoro' ? 'Focus' : 'Break'}`;
-
-    // UX: Update Circular Progress Ring
-    const circle = document.getElementById('progress-ring');
-    if (circle) {
-        const radius = circle.r.baseVal.value;
-        const circumference = 2 * Math.PI * radius;
-        const offset = circumference - (timeLeft / totalTime) * circumference;
-        circle.style.strokeDashoffset = offset;
-    }
 }
 
 // UX: Request Notification Permission
@@ -187,41 +177,26 @@ function setMode(mode) {
 
     if (mode === 'pomodoro') {
         timeLeft = 25 * 60;
-        totalTime = 25 * 60;
         if (statusBox) {
             statusBox.innerText = "Focus Time";
             statusBox.dataset.status = "focus";
             statusBox.className = "glass px-6 py-2 rounded-lg mb-4 text-sm font-mono tracking-widest uppercase text-green-400 border border-green-500/30";
         }
-        if (mainInterface) {
-            mainInterface.classList.remove('glow-break');
-            mainInterface.classList.add('glow-focus');
-        }
     }
     if (mode === 'short') {
         timeLeft = 5 * 60;
-        totalTime = 5 * 60;
         if (statusBox) {
             statusBox.innerText = "Break Time";
             statusBox.dataset.status = "break";
             statusBox.className = "glass px-6 py-2 rounded-lg mb-4 text-sm font-mono tracking-widest uppercase text-blue-400 border border-blue-500/30";
         }
-        if (mainInterface) {
-            mainInterface.classList.remove('glow-focus');
-            mainInterface.classList.add('glow-break');
-        }
     }
     if (mode === 'long') {
         timeLeft = 15 * 60;
-        totalTime = 15 * 60;
         if (statusBox) {
             statusBox.innerText = "Long Break";
             statusBox.dataset.status = "break";
             statusBox.className = "glass px-6 py-2 rounded-lg mb-4 text-sm font-mono tracking-widest uppercase text-purple-400 border border-purple-500/30";
-        }
-        if (mainInterface) {
-            mainInterface.classList.remove('glow-focus');
-            mainInterface.classList.add('glow-break');
         }
     }
 
@@ -537,20 +512,11 @@ function updateStreakDisplay() {
             dot.className = "w-3 h-3 rounded-full bg-green-400 shadow-[0_0_10px_rgba(74,222,128,0.5)]";
         } else {
             // Empty Dot
-            dot.className = "w-3 h-3 rounded-full bg-gray-700/50 border border-gray-600";
+            dot.className = "w-3 h-3 rounded-full bg-white/20 border border-white/30";
         }
         container.appendChild(dot);
     }
 }
 
-// 14. 3D Tilt Effect
-document.addEventListener('mousemove', (e) => {
-    const card = document.getElementById('main-interface');
-    if (!card) return;
 
-    const xAxis = (window.innerWidth / 2 - e.pageX) / 50; // Reduced sensitivity
-    const yAxis = (window.innerHeight / 2 - e.pageY) / 50;
-
-    card.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
-});
 
