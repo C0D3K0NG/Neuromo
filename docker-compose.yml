@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  neuromo:
+    build: .
+    container_name: neuromodul
+    ports:
+      - "8969:8969"
+    volumes:
+      # Persist the database
+      - neuromo_data:/app/instance
+      # Start with existing DB if present locally (optional dev convenience)
+      - ./neuromo.db:/app/neuromo.db
+    restart: unless-stopped
+    environment:
+      - FLASK_ENV=production
+      - PORT=8969
+
+volumes:
+  neuromo_data:

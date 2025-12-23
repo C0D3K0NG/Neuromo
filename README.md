@@ -58,7 +58,18 @@ Integrated Lofi music player, dynamic tab countdown, desktop notifications, and 
 <!-- Animated Divider -->
 <img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
 
-## <img src="https://api.iconify.design/mdi/rocket-launch.svg?color=%23ff6347" width="24" height="24"/> Quick Start
+## <img src="https://api.iconify.design/mdi/docker.svg?color=%230db7ed" width="24" height="24"/> Docker Deployment (Reference)
+
+For the easiest setup, use Docker Compose:
+
+1.  **Install Docker Desktop**: [Download](https://www.docker.com/products/docker-desktop/)
+2.  **Run**:
+    ```bash
+    docker compose up --build -d
+    ```
+3.  **Access**: [http://localhost:8969](http://localhost:8969)
+
+## <img src="https://api.iconify.design/mdi/rocket-launch.svg?color=%23ff6347" width="24" height="24"/> Quick Start (Local)
 
 ```bash
 # Clone the repository

@@ -1,12 +1,12 @@
 import os
+import webbrowser
+import threading
 from flask import Flask, render_template, Response, request, redirect, url_for, jsonify
 
-# 1. SETUP FLASK TO WORK WITH YOUR FOLDER STRUCTURE
-# We explicitly tell Flask: "My HTML is in 'pages', not 'templates'"
+
 app = Flask(__name__, template_folder='pages', static_folder='static')
 
 
-# Import the camera logic (Must be in the same folder as app.py)
 try:
     from camera import VideoCamera
     CAMERA_AVAILABLE = True
@@ -329,6 +329,14 @@ def get_status():
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8969))
-    # Run on all IPs (0.0.0.0) so you can access it, debug mode ON for errors
-    print("🟢 Starting Server on http://127.0.0.1:8969")
+    
+    # Auto-open browser (Desktop App Mode)
+    def open_browser():
+        webbrowser.open_new(f"http://127.0.0.1:{port}")
+    
+    # Only open browser if not in debug mode reloader
+    if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
+        threading.Timer(1.5, open_browser).start()
+
+    print(f"🟢 Starting Server on http://127.0.0.1:{port}")
     app.run(host='0.0.0.0', port=port)
