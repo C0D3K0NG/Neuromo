@@ -15,6 +15,43 @@ except ImportError as e:
     print(f"⚠️ Camera module missing or failed: {e}")
     CAMERA_AVAILABLE = False
 
+import sqlite3
+import datetime
+
+# --- DATABASE SETUP ---
+DB_NAME = 'neuromo.db'
+
+def init_db():
+    try:
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        
+        # 1. Sessions Table (Linked to User Token)
+        c.execute('''CREATE TABLE IF NOT EXISTS sessions (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_token TEXT NOT NULL,
+                        type TEXT NOT NULL,
+                        duration INTEGER,
+                        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                    )''')
+        
+        # 2. Events Table (Distractions/Sleep linked to User Token)
+        c.execute('''CREATE TABLE IF NOT EXISTS events (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_token TEXT NOT NULL,
+                        type TEXT NOT NULL,
+                        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                    )''')
+        
+        conn.commit()
+        conn.close()
+        print("✅ Database initialized successfully.")
+    except Exception as e:
+        print(f"❌ Database initialization failed: {e}")
+
+# Initialize DB on startup
+init_db()
+
 # --- HELPER: Get background/alarm files ---
 def get_files(folder_name):
     path = os.path.join(app.static_folder, folder_name)
@@ -28,6 +65,7 @@ def get_files(folder_name):
 
 # Create the camera object ONCE so we can read its status
 global_camera = VideoCamera()
+
 # --- ROUTES ---
 
 @app.route('/')
@@ -49,6 +87,112 @@ def dashboard():
         return "❌ ERROR: 'pages/dashboard.html' not found! Check your folder name."
         
     return render_template('dashboard.html', backgrounds=backgrounds, alarms=alarms)
+
+@app.route('/analytics')
+def analytics():
+    print("📊 Accessing Analytics Route...")
+    if not os.path.exists('pages/analytics.html'):
+        return "❌ ERROR: 'pages/analytics.html' not found!"
+    return render_template('analytics.html')
+
+# --- API ENDPOINTS (For Analytics) ---
+
+@app.route('/api/stats', methods=['GET'])
+def get_stats():
+    """Returns aggregated stats from DB + Current Camera Session"""
+    user_token = request.headers.get('X-User-Token')
+    if not user_token:
+        # If no token, return just current session stats
+        return jsonify(global_camera.stats)
+
+    try:
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        
+        # Get lifetime counts from DB for this user
+        c.execute("SELECT type, COUNT(*) FROM events WHERE user_token=? GROUP BY type", (user_token,))
+        db_stats = dict(c.fetchall())
+        conn.close()
+        
+        # Combine with current in-memory stats (not yet saved to DB)
+        current_distracted = global_camera.stats['distracted']
+        current_sleep = global_camera.stats['sleep']
+        
+        total_distracted = db_stats.get('distracted', 0) + current_distracted
+        total_sleep = db_stats.get('sleep', 0) + current_sleep
+        
+        return jsonify({
+            'distracted': total_distracted,
+            'sleep': total_sleep,
+            'current_session': global_camera.stats
+        })
+    except Exception as e:
+        print(f"❌ Error fetching stats: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/session/history', methods=['GET'])
+def get_session_history():
+    """Returns past sessions for charts"""
+    user_token = request.headers.get('X-User-Token')
+    if not user_token:
+        return jsonify([])
+
+    try:
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        
+        # Get last 50 sessions ordered by time
+        c.execute("SELECT type, duration, timestamp FROM sessions WHERE user_token=? ORDER BY timestamp DESC LIMIT 50", (user_token,))
+        sessions = [{'type': row[0], 'duration': row[1], 'timestamp': row[2]} for row in c.fetchall()]
+        
+        conn.close()
+        return jsonify(sessions)
+    except Exception as e:
+        print(f"❌ Error fetching history: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/session/complete', methods=['POST'])
+def complete_session():
+    """Saves a completed session AND any accumulated events to DB"""
+    user_token = request.headers.get('X-User-Token')
+    if not user_token:
+        return jsonify({'error': 'Token missing'}), 400
+        
+    data = request.json
+    session_type = data.get('type')
+    duration = data.get('duration') # in seconds
+    
+    try:
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        
+        # 1. Save Session
+        c.execute("INSERT INTO sessions (user_token, type, duration) VALUES (?, ?, ?)", 
+                  (user_token, session_type, duration))
+        
+        # 2. Save Pending Events from Camera (Flush buffer)
+        # We save 'current' events to DB now so they persist
+        # Note: In a real app, you might want more precise timestamping for each event
+        for _ in range(global_camera.stats['distracted']):
+            c.execute("INSERT INTO events (user_token, type) VALUES (?, 'distracted')", (user_token,))
+        
+        for _ in range(global_camera.stats['sleep']):
+            c.execute("INSERT INTO events (user_token, type) VALUES (?, 'sleep')", (user_token,))
+            
+        conn.commit()
+        conn.close()
+        
+        # RESET Camera Stats after saving (Start fresh for next session)
+        global_camera.stats['distracted'] = 0
+        global_camera.stats['sleep'] = 0
+        
+        print(f"💾 Session & Events saved for user {user_token[:8]}...")
+        return jsonify({'status': 'success'})
+        
+    except Exception as e:
+        print(f"❌ Error saving session: {e}")
+        return jsonify({'error': str(e)}), 500
+
 
 # --- VIDEO FEED LOGIC ---
 def gen(camera):

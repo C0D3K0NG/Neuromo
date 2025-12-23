@@ -6,6 +6,7 @@ let currentMode = 'pomodoro';
 let sessionCount = 0; // Track completed focus sessions
 
 // 1. Loading Screen (3 Sec Fake Load)
+// 1. Loading Screen (3 Sec Fake Load)
 window.onload = function () {
     setTimeout(() => {
         document.getElementById('loader').style.opacity = '0';
@@ -13,6 +14,16 @@ window.onload = function () {
             document.getElementById('loader').style.display = 'none';
         }, 1000);
     }, 3000);
+
+    // ANALYTICS: Generate/Retrieve User Token
+    if (!localStorage.getItem('user_token')) {
+        // Simple UUID generator fallback
+        const token = crypto.randomUUID ? crypto.randomUUID() : 'user_' + Date.now() + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('user_token', token);
+        console.log("🔑 New User Token Generated:", token);
+    } else {
+        console.log("🔑 User Token Found:", localStorage.getItem('user_token'));
+    }
 
     // Set default alarm
     const alarmSelect = document.getElementById('alarm-selector');
@@ -98,12 +109,19 @@ function handleTimerComplete() {
         // Focus -> Short Break
         sessionCount++;
         updateStreakDisplay();
+
+        // ANALYTICS: Save Session
+        saveSessionToDB('pomodoro', 25 * 60);
+
         setMode('short');
         showToast("Break Time! Relax.", "info");
         sendNotification("Break Time! Relax.");
         // Auto-Start
         setTimeout(() => toggleTimer(), 1000);
     } else if (currentMode === 'short') {
+        // ANALYTICS: Save Session
+        saveSessionToDB('short', 5 * 60);
+
         // Short Break -> Focus
         setMode('pomodoro');
         showToast("Focus Time! Let's go.", "success");
@@ -111,6 +129,9 @@ function handleTimerComplete() {
         // Auto-Start
         setTimeout(() => toggleTimer(), 1000);
     } else {
+        // ANALYTICS: Save Session
+        saveSessionToDB('long', 15 * 60);
+
         // Long Break -> Stop
         document.getElementById('alarm-audio').play();
         toggleCamera(false);
@@ -518,5 +539,176 @@ function updateStreakDisplay() {
     }
 }
 
+// ==========================================
+// 14. ANALYTICS (SPA LOGIC)
+// ==========================================
 
+let analyticsFilter = 'today';
+let analyticsCharts = {};
 
+function toggleAnalyticsView() {
+    const view = document.getElementById('analytics-view');
+    const mainInterface = document.getElementById('main-interface');
+
+    if (view.classList.contains('hidden')) {
+        // OPEN
+        view.classList.remove('hidden');
+        // Small delay to allow display:block to apply before opacity transition
+        setTimeout(() => {
+            view.classList.remove('opacity-0', 'scale-95');
+        }, 10);
+
+        // Blur background
+        mainInterface.classList.add('blur-sm', 'brightness-50');
+
+        // Fetch Data
+        fetchAnalyticsData();
+    } else {
+        // CLOSE
+        view.classList.add('opacity-0', 'scale-95');
+        mainInterface.classList.remove('blur-sm', 'brightness-50');
+
+        // Wait for transition to finish before hiding
+        setTimeout(() => {
+            view.classList.add('hidden');
+        }, 300);
+    }
+}
+
+function setFilter(filter) {
+    analyticsFilter = filter;
+
+    // Update Buttons
+    const btnToday = document.getElementById('btn-today');
+    const btnAll = document.getElementById('btn-all');
+
+    if (filter === 'today') {
+        btnToday.className = "px-4 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition bg-white/20 text-white shadow-sm";
+        btnAll.className = "px-4 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-white transition";
+    } else {
+        btnAll.className = "px-4 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition bg-white/20 text-white shadow-sm";
+        btnToday.className = "px-4 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-white transition";
+    }
+
+    fetchAnalyticsData();
+}
+
+async function fetchAnalyticsData() {
+    const token = localStorage.getItem('user_token');
+    if (!token) return;
+
+    try {
+        const headers = { 'X-User-Token': token };
+
+        // A. Get Aggregated Stats
+        const statsResponse = await fetch('/api/stats', { headers });
+        const statsData = await statsResponse.json();
+
+        // B. Get History
+        const historyResponse = await fetch('/api/session/history', { headers });
+        const historyData = await historyResponse.json();
+
+        updateAnalyticsUI(statsData, historyData);
+
+    } catch (e) {
+        console.error("Failed to load analytics:", e);
+    }
+}
+
+function updateAnalyticsUI(stats, history) {
+    let filteredHistory = history;
+
+    // Client-side filtering for History Chart
+    if (analyticsFilter === 'today') {
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        filteredHistory = history.filter(item => new Date(item.timestamp) >= startOfDay);
+    }
+
+    // Update Counters
+    document.getElementById('stat-distractions').innerText = stats.distracted || 0;
+    document.getElementById('stat-sleep').innerText = stats.sleep || 0;
+
+    // Render Charts
+    renderPieChart(stats);
+    renderHistoryChart(filteredHistory);
+}
+
+function renderPieChart(stats) {
+    const ctx = document.getElementById('chart-pie').getContext('2d');
+
+    if (analyticsCharts.pie) analyticsCharts.pie.destroy();
+
+    analyticsCharts.pie = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Distracted', 'Sleepy', 'Focused (Est)'],
+            datasets: [{
+                data: [stats.distracted, stats.sleep, Math.max(10, 100 - stats.distracted - stats.sleep)],
+                backgroundColor: [
+                    'rgba(239, 68, 68, 0.6)',
+                    'rgba(59, 130, 246, 0.6)',
+                    'rgba(34, 197, 94, 0.6)'
+                ],
+                borderColor: 'rgba(255,255,255,0.1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'right', labels: { color: '#9ca3af', font: { family: 'monospace' } } }
+            }
+        }
+    });
+}
+
+function renderHistoryChart(history) {
+    const ctx = document.getElementById('chart-history').getContext('2d');
+    if (analyticsCharts.history) analyticsCharts.history.destroy();
+
+    const labels = history.map(item => {
+        const d = new Date(item.timestamp);
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }).reverse();
+
+    const dataPoints = history.map(item => Math.round(item.duration / 60)).reverse();
+    const colors = history.map(item => {
+        if (item.type === 'pomodoro') return 'rgba(34, 197, 94, 0.5)';
+        if (item.type === 'short') return 'rgba(59, 130, 246, 0.5)';
+        return 'rgba(168, 85, 247, 0.5)';
+    }).reverse();
+
+    analyticsCharts.history = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Session Duration (Minutes)',
+                data: dataPoints,
+                backgroundColor: colors,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    suggestedMax: 10,
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { color: '#6b7280', stepSize: 1 }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#6b7280' }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+}

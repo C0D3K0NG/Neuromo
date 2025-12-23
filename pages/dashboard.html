@@ -7,6 +7,7 @@
     <title>Neuromo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* Default Background */
         body {
@@ -79,7 +80,11 @@
 
     <div class="absolute top-0 w-full p-6 flex justify-between z-40">
         <h1 class="text-2xl font-bold tracking-widest">Neuromo</h1>
-        <a href="/" class="glass px-4 py-1 rounded-full text-sm hover:bg-red-500 transition">Logout</a>
+        <button onclick="toggleAnalyticsView()"
+            class="glass px-4 py-1 rounded-full text-sm hover:bg-green-500/20 transition flex items-center gap-2">
+            <span class="material-icons text-sm">insights</span>
+            Infographics
+        </button>
     </div>
 
     <!-- Main Interface Container (Removed Glass & Glow) -->
@@ -280,7 +285,115 @@
     <audio id="alarm-audio" src=""></audio>
     <audio id="interval-beep" src="{{ url_for('static', filename='interval-beep.mp3') }}"></audio>
 
-    <script src="{{ url_for('static', filename='script.js') }}?v=4"></script>
+    <!-- ANALYTICS OVERLAY (Hidden by default) -->
+    <div id="analytics-view"
+        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xl transition-all duration-300 transform opacity-0 scale-95">
+
+        <!-- Main "Huge Glass Block" Container -->
+        <div class="glass w-[90%] h-[90%] rounded-3xl flex flex-col p-6 relative overflow-hidden bg-gray-900/40">
+
+            <!-- Header Row with Back Button -->
+            <div class="flex justify-between items-start mb-6 border-b border-white/10 pb-4">
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleAnalyticsView()"
+                        class="glass px-3 py-1.5 rounded-full flex items-center gap-2 hover:bg-white/10 transition group">
+                        <span
+                            class="material-icons text-gray-400 text-sm group-hover:text-white transition">arrow_back</span>
+                        <span class="text-xs font-medium text-gray-300 group-hover:text-white transition">Back</span>
+                    </button>
+                    <div>
+                        <h1
+                            class="text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-blue-500">
+                            Neural Analytics
+                        </h1>
+                        <p class="text-gray-400 text-[10px]">Visualize your focus patterns.</p>
+                    </div>
+                </div>
+
+                <!-- Filter Controls -->
+                <div class="glass rounded-lg p-1 flex gap-1">
+                    <button onclick="setFilter('today')" id="btn-today"
+                        class="px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition bg-white/20 text-white shadow-sm">Today</button>
+                    <button onclick="setFilter('all')" id="btn-all"
+                        class="px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider text-gray-400 hover:text-white transition">All
+                        Time</button>
+                </div>
+            </div>
+
+            <!-- Content Grid -->
+            <div class="grid grid-cols-12 gap-4 h-full overflow-y-auto pr-2">
+
+                <!-- Left Col: Key Metrics (30%) -->
+                <div class="col-span-12 lg:col-span-4 flex flex-col gap-4">
+                    <!-- Distraction Score -->
+                    <div
+                        class="glass p-4 rounded-xl relative overflow-hidden group flex flex-col justify-between min-h-[100px]">
+                        <div
+                            class="absolute -right-4 -top-4 w-20 h-20 bg-red-500/20 rounded-full blur-xl group-hover:bg-red-500/30 transition">
+                        </div>
+                        <div>
+                            <h3 class="text-gray-400 text-[10px] font-mono uppercase tracking-widest mb-1">Distractions
+                            </h3>
+                            <div class="mt-1 flex items-baseline gap-2">
+                                <span id="stat-distractions"
+                                    class="text-5xl font-bold text-white tracking-tighter drop-shadow-lg">0</span>
+                                <span
+                                    class="text-[10px] text-red-400 font-bold uppercase tracking-wider mb-1">Events</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sleep Score -->
+                    <div
+                        class="glass p-4 rounded-xl relative overflow-hidden group flex flex-col justify-between min-h-[100px]">
+                        <div
+                            class="absolute -right-4 -top-4 w-20 h-20 bg-blue-500/20 rounded-full blur-xl group-hover:bg-blue-500/30 transition">
+                        </div>
+                        <div>
+                            <h3 class="text-gray-400 text-[10px] font-mono uppercase tracking-widest mb-1">Drowsiness
+                            </h3>
+                            <div class="mt-1 flex items-baseline gap-2">
+                                <span id="stat-sleep"
+                                    class="text-5xl font-bold text-white tracking-tighter drop-shadow-lg">0</span>
+                                <span
+                                    class="text-[10px] text-blue-400 font-bold uppercase tracking-wider mb-1">Incidents</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Focus Time -->
+                    <div class="glass p-4 rounded-xl relative overflow-hidden group h-full flex flex-col min-h-0">
+                        <div
+                            class="absolute -right-4 -top-4 w-20 h-20 bg-green-500/20 rounded-full blur-xl group-hover:bg-green-500/30 transition">
+                        </div>
+                        <h3 class="text-gray-400 text-[10px] font-mono uppercase tracking-widest mb-2">Focus
+                            Distribution</h3>
+                        <div class="relative w-full flex-grow min-h-0">
+                            <div class="absolute inset-0">
+                                <canvas id="chart-pie"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Col: Main Charts (70%) -->
+                <div class="col-span-12 lg:col-span-8 flex flex-col gap-4 min-h-0">
+                    <!-- History Chart -->
+                    <div class="glass p-4 rounded-xl h-full flex flex-col min-h-0">
+                        <h3 class="text-gray-400 text-[10px] font-mono uppercase tracking-widest mb-4">Session History
+                        </h3>
+                        <div class="relative w-full flex-grow min-h-0">
+                            <div class="absolute inset-0">
+                                <canvas id="chart-history"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}?v=5"></script>
 </body>
 
 </html>

@@ -46,7 +46,16 @@ class VideoCamera(object):
         self.EAR_THRESHOLD = 0.26
         self.CONFIDENCE_THRESHOLD = 20
         self.current_status= "Active"
-        self.sleep_counter = 0
+        
+        # NEW: Analytics Counters (Lifetime of the camera object)
+        self.stats = {
+            'distracted': 0,
+            'sleep': 0
+        }
+        # State Tracking (For Rising Edge Detection)
+        self.is_distracted_state = False
+        self.is_sleepy_state = False
+        self.sleep_frames = 0
         
         # NEW: Time Tracking Variables
         self.distraction_start_time = None
@@ -119,21 +128,28 @@ class VideoCamera(object):
 
                 # --- FINAL STATUS DECISION ---
                 if avg_ear < self.EAR_THRESHOLD:
-                    self.sleep_counter += 1
+                    self.sleep_frames += 1
                     status = "Drowsy?"
                     color = (0, 255, 255) # Yellow
                     
-                    if self.sleep_counter > self.CONFIDENCE_THRESHOLD:
+                    if self.sleep_frames > self.CONFIDENCE_THRESHOLD:
                         status = "SLEEPING !!!"
                         color = (0, 0, 255) # Red
                         self.current_status = "alarm"
+                        
+                        # TRACKING: Sleep Event (Rising Edge)
+                        if not self.is_sleepy_state:
+                            self.stats['sleep'] += 1
+                            self.is_sleepy_state = True
+                            print(f"😴 Sleep Event Detected! Total: {self.stats['sleep']}")
                     
                     # Reset distraction timer if sleeping (Sleep takes priority)
                     self.distraction_start_time = None
 
                 # 2. SECONDARY: DISTRACTION (Looking away - With 5 min buffer)
                 elif is_looking_away:
-                    self.sleep_counter = 0 # Not sleeping
+                    self.sleep_frames = 0 
+                    self.is_sleepy_state = False # Reset sleep state
                     
                     # A. Start the timer if it hasn't started yet
                     if self.distraction_start_time is None:
@@ -148,17 +164,27 @@ class VideoCamera(object):
                         status = "DISTRACTED!"
                         color = (0, 0, 255) # Red
                         self.current_status = "alarm"
+                        
+                        # TRACKING: Distraction Event (Rising Edge)
+                        if not self.is_distracted_state:
+                            self.stats['distracted'] += 1
+                            self.is_distracted_state = True
+                            print(f"👀 Distraction Event Detected! Total: {self.stats['distracted']}")
+
                     else:
-                        # Still in "Grace Period" - No Alarm yet
-                        # Optional: Show countdown in text
+                        # Still in "Grace Period"
                         status = f"Away: {int(remaining_time)}s"
                         color = (0, 165, 255) # Orange warning
                         self.current_status = "active"
+                        # Do not count as distracted yet
 
                 # 3. FOCUSED (Reset everything)
                 else:
-                    self.sleep_counter = 0
+                    self.sleep_frames = 0
+                    self.is_sleepy_state = False
                     self.distraction_start_time = None # Reset the timer completely
+                    self.is_distracted_state = False # Reset distraction state
+                    
                     status = "Focused"
                     color = (0, 255, 0) # Green
                     self.current_status = "active"
