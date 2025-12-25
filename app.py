@@ -220,6 +220,43 @@ def complete_session():
         print(f"❌ Error saving session: {e}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/stats/sync', methods=['POST'])
+def sync_stats():
+    """Flushes current in-memory stats to DB without ending the session"""
+    user_token = request.headers.get('X-User-Token')
+    if not user_token:
+        return jsonify({'error': 'Token missing'}), 400
+
+    try:
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        
+        # Save accumulated stats to DB
+        distracted_count = global_camera.stats['distracted']
+        sleep_count = global_camera.stats['sleep']
+        
+        if distracted_count > 0:
+            print(f"🔄 Syncing {distracted_count} distractions...")
+            for _ in range(distracted_count):
+                c.execute("INSERT INTO events (user_token, type) VALUES (?, 'distracted')", (user_token,))
+            # Reset counter after successful sync
+            global_camera.stats['distracted'] = 0
+            
+        if sleep_count > 0:
+            print(f"🔄 Syncing {sleep_count} sleep events...")
+            for _ in range(sleep_count):
+                c.execute("INSERT INTO events (user_token, type) VALUES (?, 'sleep')", (user_token,))
+            # Reset counter after successful sync
+            global_camera.stats['sleep'] = 0
+            
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'status': 'synced'})
+    except Exception as e:
+        print(f"❌ Error syncing stats: {e}")
+        return jsonify({'error': str(e)}), 500
+
 # --- API ENDPOINTS (For Task System) ---
 
 @app.route('/api/tasks', methods=['GET'])

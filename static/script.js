@@ -168,6 +168,7 @@ function toggleTimer() {
         // 🛑 STOP EVERYTHING
         stopAlarm();
         toggleCamera(false); // Turn off camera
+        syncStats(); // Sync stats on pause
 
     } else {
         // === USER CLICKED START ===
@@ -288,6 +289,13 @@ setInterval(() => {
                     aiFeed.classList.add('border-green-500');
                 }
             });
+
+        // Sync stats every 30 seconds (approx)
+        const now = Date.now();
+        if (!window.lastSyncTime || (now - window.lastSyncTime > 30000)) {
+            syncStats();
+            window.lastSyncTime = now;
+        }
     }
 }, 1000);
 
@@ -862,6 +870,22 @@ async function saveSessionToDB(type, duration) {
         console.log(`💾 Session saved: ${type} (${duration}s)`);
     } catch (e) {
         console.error("Save session failed:", e);
+    }
+}
+
+// --- HELPER: Sync Stats (Incremental Save) ---
+async function syncStats() {
+    const token = localStorage.getItem('user_token');
+    if (!token) return;
+
+    try {
+        await fetch('/api/stats/sync', {
+            method: 'POST',
+            headers: { 'X-User-Token': token }
+        });
+        // Console log optional, keeping it quiet for periodic syncs
+    } catch (e) {
+        console.error("Sync stats failed:", e);
     }
 }
 
